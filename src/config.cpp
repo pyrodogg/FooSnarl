@@ -114,7 +114,20 @@ advconfig_integer_factory g_advconfig_time(
 	30
 );
 
+//Check Box. Send or block notifications while the player is active.
+// {D956C060-8048-46A5-8AEF-49563528DEBD}
+/*static GUID guid_advconfig_alertVisible = { 0xd956c060, 0x8048, 0x46a5, { 0x8a, 0xef, 0x49, 0x56, 0x35, 0x28, 0xde, 0xbd } };
+advconfig_checkbox_factory g_advconfig_alertVisible(
+	"Send if player visible",
+	guid_advconfig_alertVisible,
+	guid_branch_foosnarl,
+	1.0,
+	true
+);*/
 
+
+/*
+Depricated v0.2 Display of notifications controled via classes in Snarl.
 //Check Box. Notify on Play/Next Track
 //89cafc3b-b007-4351-bb29-0176167f0ef9
 static GUID guid_advconfig_playcheck = {0x89cafc3b, 0xb007, 0x4351, {0xbb, 0x29, 0x01, 0x76, 0x16, 0x7f, 0x0e, 0xf9}};
@@ -161,4 +174,4 @@ advconfig_checkbox_factory_t<false> g_advconfig_stopcheck(
 	1.0,
 	//Default Value
 	true
-);
+);*/

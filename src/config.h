@@ -12,11 +12,13 @@ extern advconfig_integer_factory g_advconfig_time;
 
 extern advconfig_string_factory g_advconfig_icon_default;
 
-extern advconfig_checkbox_factory_t<false> g_advconfig_playcheck;
+//extern advconfig_checkbox_factory g_advconfig_alertVisible;
 
-extern advconfig_checkbox_factory_t<false> g_advconfig_pausecheck;
+//extern advconfig_checkbox_factory_t<false> g_advconfig_playcheck;
 
-extern advconfig_checkbox_factory_t<false> g_advconfig_stopcheck;
+//extern advconfig_checkbox_factory_t<false> g_advconfig_pausecheck;
+
+//extern advconfig_checkbox_factory_t<false> g_advconfig_stopcheck;
 
 /*Copyright (c) 2008, Skyler Kehren
 All rights reserved.

@@ -1,3 +1,11 @@
+v0.2.1
+12/12/2010
+One notification at a time.
+Sample actions (w/ Snarl 2.4b2 beta)
+Right-click notification to open Fb2k
+Removed notification on ___ options.  Can be controlled through Snarl message classes.
+Depricated default icon configuration.  Defaults to Fb2k icon.
+
 v0.2.0
 12/8/2010
 Updated to latest SnarlInterface by Matt Battcher
