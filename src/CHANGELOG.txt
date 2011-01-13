@@ -1,5 +1,5 @@
-v0.2.1
-12/12/2010
+v1.0
+1/13/2010
 One notification at a time.
 Sample actions (w/ Snarl 2.4b2 beta)
 Right-click notification to open Fb2k
