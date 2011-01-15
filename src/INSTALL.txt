@@ -1,5 +1,5 @@
 =======FooSnarl======
-(C)2008-2011 Skyler Kehren
+(C)2008 Skyler Kehren
 see LICENSE.txt for licensing information
 =========================================
 
@@ -41,9 +41,7 @@ Now Playing
 Artist
 Song Title
 
-As of v1.0
-Each event that fires messages has it's own notification class in Snarl. 
-Use the application configuration in Snarl to set whether you want to see stop notifications, for example.
+You can also select which events you would like to be notified by by selecting/deselecting the appropriate boxes.
 
 +++MORE INFORMATION+++
 Project Homepage: http://sourceforge.net/projects/foosnarl/

@@ -36,7 +36,7 @@ using namespace pfc;
 
 DECLARE_COMPONENT_VERSION(
 		"foo_snarl",
-		"0.2.0", 
+		"1.0", 
 		"Snarl notification interface for Foobar2000\n"
 		"Developed by: Skyler Kehren (Pyrodogg)\n"
 		"Contributions by:Max Battcher\n"
