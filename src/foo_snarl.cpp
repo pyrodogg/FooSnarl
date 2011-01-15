@@ -44,9 +44,10 @@ DECLARE_COMPONENT_VERSION(
 		"Copyright (C) 2008-2010 Skyler Kehren\n"
 		"Released under BSD License");
 
-const LPCSTR foobarIcon = "C:\\Program Files\\foobar2000\\foobar2000.exe,105";
+string8 foobarIcon;
 
 SnarlInterface sn;
+UINT SNARL_GLOBAL_MSG = 0;
 HWND hwndFooSnarlMsg;
 std::map<int,char *> FSMsgClassDecode;
 LONG32 lastClassMsg[4] = {0,0,0,0};
@@ -66,6 +67,53 @@ enum FSMsgClass : int {
 //	Stop,
 //};
 
+void FSRegisterClass(int intClass){
+	if(sn.AddClass(FSMsgClassDecode[intClass],FSMsgClassDecode[intClass],true) == 0){
+		/*LPSTR error = "Unable to register ";
+		LPSTR szClass = FSMsgClassDecode[intClass];
+		error = strcat(error,szClass);
+		error = strcat(error," class");
+		popup_message::g_complain("FooSnarl",error);*/
+		popup_message::g_complain("FooSnarl","Unable to register class " + intClass);
+	}
+}
+
+void try_register()
+{
+	//Register Foobar2000 with Snarl
+	if(sn.IsSnarlRunning()){
+		//Display appropriate message depending on registration state with Snarl
+		if(sn.RegisterApp("Foobar2000","Foobar2000",foobarIcon,hwndFooSnarlMsg,WM_USER,SnarlEnums::AppHasAbout)!=0){
+			FSRegisterClass(Play);
+			FSRegisterClass(Pause);
+			FSRegisterClass(Stop);
+			FSRegisterClass(Seek);
+		}else{
+			popup_message::g_show("FooSnarl:Unable to register with Snarl","",popup_message::icon_error);
+		}
+
+		if(hwndFooSnarlMsg == NULL){
+			popup_message::g_show("FooSnarl:Unable to create message window","",popup_message::icon_error);
+		}
+	} else { 
+		/*Snarl not running */
+		//popup_message::g_show("Popup Test","Test",popup_message::icon_information);
+	}
+}
+
+void try_unregister()
+{
+	//Unregister foosnarl
+	if(sn.RemoveAllClasses(false)==0){
+		//Failed to remove registered classes
+		sn.EZNotify("","Error","FooSnarl failed to remove registered classes",10,foobarIcon,0,0,0);
+	}
+
+	if(sn.UnregisterApp()==0){
+		//FooSnarl failed to unregister
+		sn.EZNotify("","Error","FooSnarl failed to unregister with Snarl",10,foobarIcon,0,0,0);
+	};
+}
 
 LRESULT CALLBACK WndProcFooSnarl(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam){
 	switch(message)
@@ -76,9 +124,29 @@ LRESULT CALLBACK WndProcFooSnarl(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		}
 	case WM_CLOSE:
 		DestroyWindow(hwnd);
+	default:
+		if (message == ::SNARL_GLOBAL_MSG)
+		{
+			switch(wParam)
+			{
+			case SnarlEnums::SnarlLaunched:
+				try_register();
+				return 0;
+
+			case SnarlEnums::SnarlQuit:
+				try_unregister();
+				return 0;
+			}
+		}
+		break;
 	case WM_USER:
 		switch(wParam)
 		{
+		case SnarlEnums::SnarlQuit:
+			{
+				try_unregister();
+				return 0;
+			}
 		case SnarlEnums::NotificationClicked:
 			{
 				static_api_ptr_t<ui_control>()->activate();
@@ -122,20 +190,12 @@ public:
 	string8 image;
 	static_api_ptr_t<play_callback_manager> playCBM;
 	static_api_ptr_t<ui_control> uiMain;
-	WNDCLASSEX wcex;
+	WNDCLASSEX wcex = {0};
 	
 	wcex.cbSize = sizeof(WNDCLASSEX);
-	wcex.style= 0;
 	wcex.lpfnWndProc = (WNDPROC) WndProcFooSnarl;
-	wcex.cbClsExtra = 0;
-	wcex.cbWndExtra = 0;
 	wcex.hInstance = core_api::get_my_instance();
-	wcex.hIcon = NULL;
-	wcex.hCursor = NULL;
-	wcex.hbrBackground = NULL;
-	wcex.lpszMenuName = NULL;
-	wcex.hIconSm = NULL;
-	wcex.lpszClassName = L"FooSnarlMsg";
+	wcex.lpszClassName = _T("FooSnarlMsg");
 
 	FSMsgClassDecode[FSMsgClass::Play] = "Play";
 	FSMsgClassDecode[FSMsgClass::Pause] = "Pause";
@@ -173,73 +233,42 @@ public:
 	//	LocalFree(lpMsgBuf);
 	//	LocalFree(lpDisplayBuf);
 
-	hwndFooSnarlMsg = CreateWindowEx(0,L"FooSnarlMsg",L"FooSnarl Msg",0,0,0,0,0,HWND_MESSAGE,0,0,0);
+	uGetModuleFileName(NULL, foobarIcon);
+	foobarIcon += ",105";
+
+	::SNARL_GLOBAL_MSG = sn.Broadcast();
+
+	hwndFooSnarlMsg = CreateWindowEx(0,_T("FooSnarlMsg"),_T("FooSnarl Msg"),0,0,0,0,0,GetDesktopWindow(),0,0,0);
 
 	//sn.EZNotify("","HWND",(LPCSTR)hwndFooSnarlMsg,5,0,0,0,0);
 
 		//Register Playcallback module
 	playCBM->register_callback(this,flag_on_playback_new_track | 
-		flag_on_playback_dynamic_info | 
+		/*flag_on_playback_dynamic_info | */
 		flag_on_playback_dynamic_info_track | 
 		flag_on_playback_pause | 
 		flag_on_playback_stop,true);
-	
-	//Register Foobar2000 with Snarl
-	if(sn.IsSnarlRunning()){
-		//Display appropriate message depending on registration state with Snarl
-		if(sn.RegisterApp("Foobar2000","Foobar2000",foobarIcon,hwndFooSnarlMsg,WM_USER,SnarlEnums::AppHasAbout)!=0){
-			FSRegisterClass(Play);
-			FSRegisterClass(Pause);
-			FSRegisterClass(Stop);
-			FSRegisterClass(Seek);
-		}else{
-			popup_message::g_show("FooSnarl:Unable to register with Snarl","",popup_message::icon_error);
-		}
 
-		if(hwndFooSnarlMsg == NULL){
-			popup_message::g_show("FooSnarl:Unable to create message window","",popup_message::icon_error);
-		}
-	} else { 
-		/*Snarl not running */
-		//popup_message::g_show("Popup Test","Test",popup_message::icon_information);
-	}
-	
+	try_register();	
 }
-
- void FSRegisterClass(int intClass){
-	 if(sn.AddClass(FSMsgClassDecode[intClass],FSMsgClassDecode[intClass],true) == 0){
-		 /*LPSTR error = "Unable to register ";
-		 LPSTR szClass = FSMsgClassDecode[intClass];
-		 error = strcat(error,szClass);
-		 error = strcat(error," class");
-		 popup_message::g_complain("FooSnarl",error);*/
-		 popup_message::g_complain("FooSnarl","Unable to register class " + intClass);
-	 }
- }
 
  void on_quit()
 {
 	//Unregister playcallback
 	static_api_ptr_t<play_callback_manager>()->unregister_callback(this);
-	
-	//Unregister foosnarl
-	if(sn.RemoveAllClasses(false)==0){
-		//Failed to remove registered classes
-		sn.EZNotify("","Error","FooSnarl failed to remove registered classes",10,foobarIcon,0,0,0);
-	}
 
-	if(sn.UnregisterApp()==0){
-		//FooSnarl failed to unregister
-		sn.EZNotify("","Error","FooSnarl failed to unregister with Snarl",10,foobarIcon,0,0,0);
-	};
+	try_unregister();
 
 	lastSong = 0;
 	DestroyWindow(hwndFooSnarlMsg);
-	UnregisterClass(L"FooSnarlMsg",core_api::get_my_instance());
+	UnregisterClass(_T("FooSnarlMsg"),core_api::get_my_instance());
+
+	if ( temp_file.get_length() ) uDeleteFile(temp_file);
 }
 
 protected:
 metadb_handle_ptr lastSong;
+string8 temp_file;
 
 void on_playback_event(int alertClass){
 	static_api_ptr_t<playback_control> pc;
@@ -250,7 +279,6 @@ void on_playback_event(int alertClass){
 	string snarl_title;
 	string snarl_msg;
 	string snarl_icon;
-	WCHAR icon_check[MAX_PATH];
 	long snarl_time;
 
 	if(pc->get_now_playing(handle)){
@@ -271,15 +299,43 @@ void on_playback_event(int alertClass){
 	pc->playback_format_title_ex(handle, NULL, text, script, NULL, play_control::display_level_titles);
 	snarl_title = text.toString();
 
-	//Process title format string for message icon location
-	g_advconfig_icon.get_static_instance().get_state(format);
-	static_api_ptr_t<titleformat_compiler>()->compile_safe(script, format);
-	pc->playback_format_title_ex(handle, NULL, text, script, NULL, play_control::display_level_titles);
-	snarl_icon = text.toString();
-	MultiByteToWideChar(CP_UTF8,0,snarl_icon.get_ptr(),strlen(snarl_icon.get_ptr())+1,icon_check,sizeof(icon_check)/sizeof(icon_check[0]));
-		
+	metadb_handle_list handle_list;
+	list_t<GUID> guid_list;
+	handle_list.add_item(handle);
+	guid_list.add_item( album_art_ids::cover_front );
+	try
+	{
+		abort_callback_impl moo;
+		album_art_extractor_instance_v2::ptr art_instance = static_api_ptr_t<album_art_manager_v2>()->open( handle_list, guid_list, moo );
+		album_art_data_ptr art = art_instance->query( album_art_ids::cover_front, moo );
+		if ( art->get_size() )
+		{
+			string8 temp_path;
+			if ( temp_file.get_length() ) uDeleteFile( temp_file );
+			if ( uGetTempPath( temp_path ) && uGetTempFileName( temp_path, "snl", 0, temp_file ) )
+			{
+				snarl_icon = temp_file;
+				temp_path = "file://";
+				temp_path += temp_file;
+				file::ptr icon_file;
+				filesystem::g_open( icon_file, temp_path, filesystem::open_mode_write_new, moo );
+				icon_file->write_object( art->get_ptr(), art->get_size(), moo );
+				icon_file.release();
+			}
+			else throw exception_album_art_not_found();
+		}
+	}
+	catch (...)
+	{
+		//Process title format string for message icon location
+		g_advconfig_icon.get_static_instance().get_state(format);
+		static_api_ptr_t<titleformat_compiler>()->compile_safe(script, format);
+		pc->playback_format_title_ex(handle, NULL, text, script, NULL, play_control::display_level_titles);
+		snarl_icon = text.toString();
+	}
+
 	//Test for existance of folder.jpg picture file
-	DWORD attrib = GetFileAttributes(icon_check);
+	DWORD attrib = GetFileAttributes(stringcvt::string_os_from_utf8(snarl_icon.get_ptr()));
 	if((snarl_icon.get_ptr()=="" )||(0xFFFFFFFF == attrib)){
 		snarl_icon = foobarIcon;
 	}
@@ -341,7 +397,9 @@ void  on_playback_pause(bool p_state) {
 }
 void  on_playback_edited(metadb_handle_ptr p_track) {}
 void  on_playback_dynamic_info(const file_info & p_info) {}
-void  on_playback_dynamic_info_track(const file_info &p_info) {}
+void  on_playback_dynamic_info_track(const file_info &p_info) {
+	on_playback_event(FSMsgClass::Play);
+}
 void  on_playback_time(double p_time) {}
 void  on_volume_change(float p_new_val) {}
 LPSTR FSClass(int intclass){
@@ -359,6 +417,7 @@ LPSTR FSClass(int intclass){
 			return "Seek";
 			break;
 	}
+	return "";
 }
 
 };
