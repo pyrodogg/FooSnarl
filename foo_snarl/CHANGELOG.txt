@@ -1,0 +1,28 @@
+v0.2.1
+12/12/2010
+One notification at a time.
+Sample actions (w/ Snarl 2.4b2 beta)
+Right-click notification to open Fb2k
+Removed notification on ___ options.  Can be controlled through Snarl message classes.
+Depricated default icon configuration.  Defaults to Fb2k icon.
+
+v0.2.0
+12/8/2010
+Updated to latest SnarlInterface by Matt Battcher
+Built with Fb2k SDK 2010-10-02
+Added message classes (Play, Pause, Stop) to corresponding events.  Each class can be assigned it's own style in Snarl.
+Incorporated patch submitted by grey_teardrop to fix unicode filepath and cover art.
+Stop event reports the track that was playing.
+
+
+v0.1.6
+8/11/08
+Dependency Problem fixed
+Default album art string fixed
+
+v0.1.5
+8/10/08
+Actually does default to default image if album art is not present
+
+v0.1
+First Public Release
