@@ -74,7 +74,10 @@ void FSRegisterClass(int intClass){
 		error = strcat(error,szClass);
 		error = strcat(error," class");
 		popup_message::g_complain("FooSnarl",error);*/
-		popup_message::g_complain("FooSnarl","Unable to register class " + intClass);
+		if (sn.GetLastError() != SnarlEnums::ErrorClassAlreadyExists)
+		{
+			popup_message::g_complain("FooSnarl",string_formatter() << "Unable to register class " << intClass);
+		}
 	}
 }
 
@@ -140,7 +143,7 @@ LRESULT CALLBACK WndProcFooSnarl(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		}
 		break;
 	case WM_USER:
-		switch(wParam)
+		switch(LOWORD(wParam))
 		{
 		case SnarlEnums::SnarlQuit:
 			{
@@ -160,7 +163,7 @@ LRESULT CALLBACK WndProcFooSnarl(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 			{
 				return 0;
 			}
-		default:
+		case SnarlEnums::NotificationAction:
 			int action = HIWORD(wParam);
 			switch(action){
 			case 1:
@@ -286,6 +289,8 @@ void on_playback_event(int alertClass){
 	} else {	
 			handle.copy(lastSong);
 	}
+
+	if (handle.is_empty()) return;
 	
 	//Process title format string for message body
 	g_advconfig_string_format.get_static_instance().get_state(format);
