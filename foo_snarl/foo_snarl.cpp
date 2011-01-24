@@ -92,7 +92,8 @@ void try_register()
 			FSRegisterClass(Stop);
 			FSRegisterClass(Seek);
 		}else{
-			popup_message::g_show("FooSnarl:Unable to register with Snarl","",popup_message::icon_error);
+			if (sn.GetLastError() != SnarlEnums::ErrorNotRunning)
+				popup_message::g_show("FooSnarl:Unable to register with Snarl","",popup_message::icon_error);
 		}
 
 		if(hwndFooSnarlMsg == NULL){
@@ -109,12 +110,14 @@ void try_unregister()
 	//Unregister foosnarl
 	if(sn.RemoveAllClasses(false)==0){
 		//Failed to remove registered classes
-		sn.EZNotify("","Error","FooSnarl failed to remove registered classes",10,foobarIcon,0,0,0);
+		if (sn.GetLastError() != SnarlEnums::ErrorNotRunning)
+			sn.EZNotify("","Error","FooSnarl failed to remove registered classes",10,foobarIcon,0,0,0);
 	}
 
 	if(sn.UnregisterApp()==0){
 		//FooSnarl failed to unregister
-		sn.EZNotify("","Error","FooSnarl failed to unregister with Snarl",10,foobarIcon,0,0,0);
+		if (sn.GetLastError() != SnarlEnums::ErrorNotRunning)
+			sn.EZNotify("","Error","FooSnarl failed to unregister with Snarl",10,foobarIcon,0,0,0);
 	};
 }
 
@@ -133,10 +136,12 @@ LRESULT CALLBACK WndProcFooSnarl(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 			switch(wParam)
 			{
 			case SnarlEnums::SnarlLaunched:
+			case SnarlEnums::SnarlStarted:
 				try_register();
 				return 0;
 
 			case SnarlEnums::SnarlQuit:
+			case SnarlEnums::SnarlStopped:
 				try_unregister();
 				return 0;
 			}
@@ -151,19 +156,23 @@ LRESULT CALLBACK WndProcFooSnarl(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 				return 0;
 			}
 		case SnarlEnums::NotificationClicked:
+		case SnarlEnums::NewNotificationClick:
 			{
 				static_api_ptr_t<ui_control>()->activate();
 				return 0;
 			}
 		case SnarlEnums::NotificationAck:
+		case SnarlEnums::NewNotificationInvoked:
 			{
 				return 0;
 			}
 		case SnarlEnums::NotificationTimedOut:
+		case SnarlEnums::NewNotificationExpired:
 			{
 				return 0;
 			}
 		case SnarlEnums::NotificationAction:
+		case SnarlEnums::NewNotificationAction:
 			int action = HIWORD(wParam);
 			switch(action){
 			case 1:
@@ -375,9 +384,9 @@ void on_playback_event(int alertClass){
 }
 
 LONG32 FSAddActions(){
-	sn.AddAction(sn.GetLastMsgToken(),"Back",NULL);
-	sn.AddAction(sn.GetLastMsgToken(),"Next",NULL);
-	sn.AddAction(sn.GetLastMsgToken(),"Stop",NULL);
+	sn.AddAction(sn.GetLastMsgToken(),"Back","@1");
+	sn.AddAction(sn.GetLastMsgToken(),"Next","@2");
+	sn.AddAction(sn.GetLastMsgToken(),"Stop","@3");
 	return 0;
 }
 

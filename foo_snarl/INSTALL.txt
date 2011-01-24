@@ -1,16 +1,23 @@
 =======FooSnarl======
-(C)2008 Skyler Kehren
+(C)2008-2011 Skyler Kehren
 see LICENSE.txt for licensing information
 =========================================
 
 
 +++INSTALLATION+++
 
-Install Foobar2000 at http://foobar2000.org/
-Install Snarl at http://www.fullphat.net/
+Get and install Foobar2000 from http://foobar2000.org/
+Get and install Snarl from http://www.fullphat.net/
 
+(For foobar2000 version 1.1 or newer)
+Open foobar2000. Open the Preferences dialog. Navigate to the Components page at the
+top of the list, if necessary. Either drag this component .ZIP archive onto the components
+listing, or click the Install... button and locate the .ZIP manually.
+
+(For foobar2000 versions prior to 1.1)
 Copy foo_snarl.dll to the Components subdirectory of your Foobar2000 install
 	Probably "C:\Program Files\Foobar2000\Components"
+
 Start Foobar
 
 
@@ -22,11 +29,16 @@ Advanced
 -->FooSnarl
 ---->FooSnarl Otions Here
 
-The Title, Message, and Image of the Snarl notifications can be customized using the Foobar2000 Title Formatting code. Information on titleformatting here: http://wiki.hydrogenaudio.org/index.php?title=Foobar2000:Titleformat_Reference
+The Title, Message, and Image of the Snarl notifications can be customized using the Foobar2000 Title
+Formatting code. Information on titleformatting here:
+http://wiki.hydrogenaudio.org/index.php?title=Foobar2000:Titleformat_Reference
 
-By Default the Icon is set to display the album art (folder.jpg file) as the image in the notification  
+As of foobar2000 1.0, by Default, the Icon is set to display the front album art exposed by the
+foobar2000 album art manager API, which is configurable under the Preferences dialog, under Display.
+If this fails, a simple title formatting substitute will execute. This defaults to:
 	$directory_path(%path%)\folder.jpg
-	NOTE: A static default image can also be set incase album art cannot be found. It will also be used on the Stop Track notifications
+	NOTE: A static default image can also be set incase album art cannot be found. It will also be
+	used on the Stop Track notifications
 
 Title Default 
 	$if(%isplaying%,$if(%ispaused%,Paused,Now Playing),Stopped)
