@@ -51,5 +51,8 @@
     <None Include="INSTALL.txt">
       <Filter>Doc</Filter>
     </None>
+    <None Include="README.md">
+      <Filter>Doc</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -118,6 +118,7 @@
     <None Include="CHANGELOG.txt" />
     <None Include="INSTALL.txt" />
     <None Include="LICENSE.txt" />
+    <None Include="README.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
