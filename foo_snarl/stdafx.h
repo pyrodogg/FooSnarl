@@ -1,4 +1,4 @@
-#include "foobar2000.h"
+#include "../../foobar2000/sdk/foobar2000.h"
 //#include "helpers.h
 //#include "../../../ATLHelpers/ATLHelpers.h"
 
@@ -6,6 +6,8 @@
 #define _8251B63D_2C1C_4e9d_9320_4E12E46331CB_
 
 #define _SECURE_ATL 1
+#define _WTL_FORWARD_DECLARE_CSTRING
+#define _WTL_NO_AUTOMATIC_NAMESPACE
 
 #include <atlbase.h>
 #include <atltypes.h>
