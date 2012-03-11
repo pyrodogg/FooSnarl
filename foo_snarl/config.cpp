@@ -114,6 +114,10 @@ advconfig_integer_factory g_advconfig_time(
 	30
 );
 
+// {AC0EE854-AD81-4E50-80E5-AB5914EA21D0}
+static const GUID guid_foosnarl_mainmenu_maingroup = 
+{ 0xac0ee854, 0xad81, 0x4e50, { 0x80, 0xe5, 0xab, 0x59, 0x14, 0xea, 0x21, 0xd0 } };
+
 //Check Box. Send or block notifications while the player is active.
 // {D956C060-8048-46A5-8AEF-49563528DEBD}
 /*static GUID guid_advconfig_alertVisible = { 0xd956c060, 0x8048, 0x46a5, { 0x8a, 0xef, 0x49, 0x56, 0x35, 0x28, 0xde, 0xbd } };

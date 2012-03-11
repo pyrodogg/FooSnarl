@@ -12,6 +12,8 @@ extern advconfig_integer_factory g_advconfig_time;
 
 extern advconfig_string_factory g_advconfig_icon_default;
 
+extern const GUID guid_foosnarl_mainmenu_maingroup;
+
 //extern advconfig_checkbox_factory g_advconfig_alertVisible;
 
 //extern advconfig_checkbox_factory_t<false> g_advconfig_playcheck;
