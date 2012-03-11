@@ -32,22 +32,20 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 
 #pragma comment(lib, "../../foobar2000/shared/shared.lib")
 
-using namespace pfc;
-
 DECLARE_COMPONENT_VERSION(
 		"foo_snarl",
 		"2.0.0", 
 		"Snarl notification interface for Foobar2000\n"
 		"Developed by: Skyler Kehren (Pyrodogg)\n"
-		"Contributions by:Max Battcher\n"
 		"foosnarl at pyrodogg.com\n"
 		"Copyright (C) 2008-2012 Skyler Kehren\n"
-		"Released under BSD License");
+		"Released under BSD License\n"
+		"Contributions by:Max Battcher");
 
-string8 foobarIcon;
+pfc::string8 foobarIcon;
 
 Snarl::V42::SnarlInterface sn42;
-string8 snarl_password;
+pfc::string8 snarl_password;
 HWND hwndFooSnarlMsg;
 std::map<int,char *> FSMsgClassDecode;
 LONG32 lastClassMsg[4] = {0,0,0,0};
@@ -90,8 +88,6 @@ LPSTR FSClass(int intclass){
 }
 
 void FSRegisterClass(int intClass){
-	bool error;
-
 	LONG32 ret = sn42.AddClass(FSMsgClassDecode[intClass], FSMsgClassDecode[intClass], snarl_password.get_ptr());
 	if ( ret < 0 && ret != -Snarl::V42::SnarlEnums::ErrorAlreadyRegistered )
 	{
@@ -178,13 +174,13 @@ protected:
 	void on_playback_event(int alertClass){
 		static_api_ptr_t<playback_control> pc;
 		metadb_handle_ptr handle;
-		string8 format;
+		pfc::string8 format;
 		service_ptr_t<titleformat_object> script;
-		string_formatter text;
-		string snarl_title;
-		string snarl_msg;
-		string snarl_icon;
-		string8 snarl_icon_data;
+		pfc::string_formatter text;
+		pfc::string snarl_title;
+		pfc::string snarl_msg;
+		pfc::string snarl_icon;
+		pfc::string8 snarl_icon_data;
 		long snarl_time;
 
 		if(pc->get_now_playing(handle)){
@@ -208,7 +204,7 @@ protected:
 		snarl_title = text.toString();
 
 		metadb_handle_list handle_list;
-		list_t<GUID> guid_list;
+		pfc::list_t<GUID> guid_list;
 		handle_list.add_item(handle);
 		guid_list.add_item( album_art_ids::cover_front );
 		try
@@ -313,7 +309,7 @@ class initquit_foosnarl : public initquit {
 public:
 	void on_init()
 	{
-		string8 image;
+		pfc::string8 image;
 		
 		static_api_ptr_t<ui_control> uiMain;
 		WNDCLASSEX wcex = {0};
@@ -419,7 +415,7 @@ static void try_register()
 	//Register Foobar2000 with Snarl
 	service_ptr_t<genrand_service> g_rand = genrand_service::g_create();
 	g_rand->seed( time( NULL ) );
-	array_t<unsigned> junk;
+	pfc::array_t<unsigned> junk;
 	junk.set_count( 4 );
 	for ( unsigned i = 0; i < 4; i++ ) junk[ i ] = g_rand->genrand( ~0 );
 	base64_encode( snarl_password, junk.get_ptr(), 16 );
