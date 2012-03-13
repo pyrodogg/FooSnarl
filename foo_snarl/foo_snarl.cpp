@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008-2011, Skyler Kehren
+Copyright (c) 2008-2012, Skyler Kehren
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted 
@@ -24,23 +24,18 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 */
 
 #include "stdafx.h"
-#include "../../SnarlInterface_V42/SnarlInterface.h"
-#include "config.h"
-#include <map>
-#include <strsafe.h>
-#include <time.h>
 
-#pragma comment(lib, "../../foobar2000/shared/shared.lib")
 
+VALIDATE_COMPONENT_FILENAME("foo_snarl.dll");
 DECLARE_COMPONENT_VERSION(
-		"foo_snarl",
-		"2.0.0", 
+		"FooSnarl",
+		"2.0 ", 
 		"Snarl notification interface for Foobar2000\n"
 		"Developed by: Skyler Kehren (Pyrodogg)\n"
 		"foosnarl at pyrodogg.com\n"
 		"Copyright (C) 2008-2012 Skyler Kehren\n"
 		"Released under BSD License\n"
-		"Contributions by:Max Battcher");
+		"Contributions by: Max Battcher");
 
 pfc::string8 foobarIcon;
 
@@ -192,13 +187,13 @@ protected:
 		if (handle.is_empty()) return;
 	
 		//Process title format string for message body
-		g_advconfig_string_format.get_static_instance().get_state(format);
+		FooSnarl::Preferencesv1::g_advconfig_string_format.get_static_instance().get_state(format);
 		static_api_ptr_t<titleformat_compiler>()->compile_safe(script, format);
 		pc->playback_format_title_ex(handle, NULL, text, script, NULL, play_control::display_level_titles);
 		snarl_msg = text.toString();
 
 		//Process title format string for message title
-		g_advconfig_string_title_format.get_static_instance().get_state(format);
+		FooSnarl::Preferencesv1::g_advconfig_string_title_format.get_static_instance().get_state(format);
 		static_api_ptr_t<titleformat_compiler>()->compile_safe(script, format);
 		pc->playback_format_title_ex(handle, NULL, text, script, NULL, play_control::display_level_titles);
 		snarl_title = text.toString();
@@ -222,7 +217,7 @@ protected:
 		catch (...)
 		{
 			//Process title format string for message icon location
-			g_advconfig_icon.get_static_instance().get_state(format);
+			FooSnarl::Preferencesv1::g_advconfig_icon.get_static_instance().get_state(format);
 			static_api_ptr_t<titleformat_compiler>()->compile_safe(script, format);
 			pc->playback_format_title_ex(handle, NULL, text, script, NULL, play_control::display_level_titles);
 			snarl_icon = text.toString();
@@ -235,7 +230,7 @@ protected:
 		}*/
 
 		//Get display timeout from user settings. If invalid, send error. Shouldn't happen max and min are set. 
-		snarl_time = (long) g_advconfig_time.get_static_instance().get_state_int();
+		snarl_time = (long) FooSnarl::Preferencesv1::g_advconfig_time.get_static_instance().get_state_int();
 		if((snarl_time==NULL)||(snarl_time==0)){
 			snarl_time = 5;
 			snarl_title = "ERROR";
@@ -386,8 +381,7 @@ class mainmenu_commands_foosnarl : public mainmenu_commands {
 
 	//Every set of commands needs to declare which group it  belongs to.
 	virtual GUID get_parent(){
-		//return mainmenu_groups::view;
-		return guid_foosnarl_mainmenu_maingroup;
+		return FooSnarl::Preferencesv1::guid_foosnarl_mainmenu_maingroup;
 	}
 
 	// Execute n-th command.
@@ -500,4 +494,4 @@ void base64_encode(pfc::string_base & out, const unsigned char * data, unsigned 
 //Register initquit, menu
 static initquit_factory_t< initquit_foosnarl > foo_snarl_initquit;
 static mainmenu_commands_factory_t<mainmenu_commands_foosnarl> foo_snarl_menu;
-static mainmenu_group_popup_factory mainmenu_group(guid_foosnarl_mainmenu_maingroup, mainmenu_groups::view,mainmenu_commands::sort_priority_dontcare,"FooSnarl");
+static mainmenu_group_popup_factory mainmenu_group(FooSnarl::Preferencesv1::guid_foosnarl_mainmenu_maingroup, mainmenu_groups::view,mainmenu_commands::sort_priority_dontcare,"FooSnarl");
