@@ -35,6 +35,6 @@ namespace FooSnarl{
 		extern cfg_string textformat_data;
 
 		extern const GUID guid_timeout;
-		extern cfg_int timeout;
+		extern cfg_int timeout_data;
 	}
 }

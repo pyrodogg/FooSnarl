@@ -33,11 +33,29 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 
 #include "resource.h"
 #include "config.h"
+#include "preferences.h"
 #include <map>
 #include <strsafe.h>
 #include <time.h>
 
 #define _SECURE_ATL 1
+
+namespace FooSnarl{
+	class FooSnarl{
+	public:
+		void on_playback_event(int alertClass);
+		LONG32 FSAddActions();
+	};
+}
+
+enum FSMsgClass : int {
+	Stop = 0,
+	Play,
+	Pause,
+	Seek
+};
+
+static FooSnarl::FooSnarl foo_snarl;
 
 #define COMPONENT_TITLE "FooSnarl"
 #define COMPONENT_VERSION = "2.0.0"

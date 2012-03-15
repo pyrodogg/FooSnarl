@@ -37,7 +37,7 @@ namespace FooSnarl {
 
 		// {B211CA86-2C01-4B4B-9DF1-72CE742C3123}
 		static const GUID guid_timeout = { 0xb211ca86, 0x2c01, 0x4b4b, { 0x9d, 0xf1, 0x72, 0xce, 0x74, 0x2c, 0x31, 0x23 } };
-		cfg_string timeout_data(guid_timeout, "5");
+		cfg_int timeout_data(guid_timeout, 5);
 	}
 
 	class CMyPreferences : public CDialogImpl<CMyPreferences>, public preferences_page_instance {
@@ -67,9 +67,11 @@ namespace FooSnarl {
 			textformat = GetDlgItem(IDC_TEXTFORMAT_DATA);
 			timeout = GetDlgItem(IDC_TIMEOUT);
 
+			pfc::string timeout_str = pfc::toString<t_int32>(Preferencesv2::timeout_data);
+
 			uSetWindowText(titleformat, Preferencesv2::titleformat_data);
 			uSetWindowText(textformat, Preferencesv2::textformat_data);
-			uSetWindowText(timeout,Preferencesv2::timeout_data);
+			uSetWindowText(timeout,timeout_str.get_ptr());
 
 			titleformat.EnableWindow(true);
 			textformat.EnableWindow(true);
@@ -86,7 +88,7 @@ namespace FooSnarl {
 			uGetWindowText(textformat,temp);
 			if(Preferencesv2::textformat_data != temp) return true;
 			uGetWindowText(timeout,temp);
-			if(Preferencesv2::timeout_data != temp) return true;
+			if(Preferencesv2::timeout_data != atoi(temp)) return true;
 
 			return false;
 		}
@@ -98,9 +100,11 @@ namespace FooSnarl {
 		}
 
 		void apply(){
+			pfc::string8 temp;
 			uGetWindowText(titleformat, Preferencesv2::titleformat_data);
 			uGetWindowText(textformat, Preferencesv2::textformat_data);
-			uGetWindowText(timeout, Preferencesv2::timeout_data);
+			uGetWindowText(timeout, temp);
+			Preferencesv2::timeout_data = atoi(temp);
 		}
 
 		void on_change(){

@@ -45,17 +45,15 @@ HWND hwndFooSnarlMsg;
 std::map<int,char *> FSMsgClassDecode;
 LONG32 lastClassMsg[4] = {0,0,0,0};
 LONG32 lastMsg = 0;
+//class play_callback_foosnarl;
+////void play_callback_foosnarl :: on_playback_new_track(metadb_handle_ptr p_track){}
+//static play_callback_static_factory_t<play_callback_foosnarl> pcb_foosnarl;
 
 int FSLastMsgClass = 0;
 int FSMsgClassCount = 4;
 metadb_handle_ptr lastSong;
 
-enum FSMsgClass : int {
-	Stop = 0,
-	Play,
-	Pause,
-	Seek
-};
+
 
 #pragma region Declarations
 static void try_register();
@@ -163,140 +161,112 @@ LRESULT CALLBACK WndProcFooSnarl(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 }
 #pragma endregion
 
-#pragma  region Play Callback 
-class play_callback_foosnarl : public play_callback {
-protected:
-	void on_playback_event(int alertClass){
-		static_api_ptr_t<playback_control> pc;
-		metadb_handle_ptr handle;
-		pfc::string8 format;
-		service_ptr_t<titleformat_object> script;
-		pfc::string_formatter text;
-		pfc::string snarl_title;
-		pfc::string snarl_msg;
-		pfc::string snarl_icon;
-		pfc::string8 snarl_icon_data;
-		long snarl_time;
+#pragma region FooSnarl
+		void FooSnarl::FooSnarl::on_playback_event(int alertClass){
+			static_api_ptr_t<playback_control> pc;
+			metadb_handle_ptr handle;
+			pfc::string8 format;
+			service_ptr_t<titleformat_object> script;
+			pfc::string_formatter text;
+			pfc::string snarl_title;
+			pfc::string snarl_msg;
+			pfc::string snarl_icon;
+			pfc::string8 snarl_icon_data;
+			long snarl_time;
 
-		if(pc->get_now_playing(handle)){
-			lastSong.copy(handle);
-		} else {	
-			handle.copy(lastSong);
-		}
-
-		if (handle.is_empty()) return;
-	
-		//Process title format string for message body
-		FooSnarl::Preferencesv1::g_advconfig_string_format.get_static_instance().get_state(format);
-		static_api_ptr_t<titleformat_compiler>()->compile_safe(script, format);
-		pc->playback_format_title_ex(handle, NULL, text, script, NULL, play_control::display_level_titles);
-		snarl_msg = text.toString();
-
-		//Process title format string for message title
-		FooSnarl::Preferencesv1::g_advconfig_string_title_format.get_static_instance().get_state(format);
-		static_api_ptr_t<titleformat_compiler>()->compile_safe(script, format);
-		pc->playback_format_title_ex(handle, NULL, text, script, NULL, play_control::display_level_titles);
-		snarl_title = text.toString();
-
-		metadb_handle_list handle_list;
-		pfc::list_t<GUID> guid_list;
-		handle_list.add_item(handle);
-		guid_list.add_item( album_art_ids::cover_front );
-		try
-		{
-			//Get front cover album art if available
-			abort_callback_impl moo;
-			album_art_extractor_instance_v2::ptr art_instance = static_api_ptr_t<album_art_manager_v2>()->open( handle_list, guid_list, moo );
-			album_art_data_ptr art = art_instance->query( album_art_ids::cover_front, moo );
-			if ( art->get_size() )
-			{
-				base64_encode( snarl_icon_data, art->get_ptr(), art->get_size() );
-				snarl_icon = "";	
+			if(pc->get_now_playing(handle)){
+				lastSong.copy(handle);
+			} else {	
+				handle.copy(lastSong);
 			}
-		}
-		catch (...)
-		{
-			//Process title format string for message icon location
-			FooSnarl::Preferencesv1::g_advconfig_icon.get_static_instance().get_state(format);
-			static_api_ptr_t<titleformat_compiler>()->compile_safe(script, format);
+
+			if (handle.is_empty()) return;
+
+			//Process title format string for message body
+			static_api_ptr_t<titleformat_compiler>()->compile_safe_ex(script,Preferencesv2::textformat_data,"Invalid format script");
+			//Preferencesv1::g_advconfig_string_format.get_static_instance().get_state(format);
+			//static_api_ptr_t<titleformat_compiler>()->compile_safe(script, format);
 			pc->playback_format_title_ex(handle, NULL, text, script, NULL, play_control::display_level_titles);
-			snarl_icon = text.toString();
-		}
+			snarl_msg = text.toString();
 
-		//Test for existance of folder.jpg picture file
-		/*DWORD attrib = GetFileAttributes(stringcvt::string_os_from_utf8(snarl_icon.get_ptr()));
-		if((snarl_icon.get_ptr()=="")||(0xFFFFFFFF == attrib)){
-			snarl_icon = foobarIcon;
-		}*/
+			//Process title format string for message title
+			static_api_ptr_t<titleformat_compiler>()->compile_safe_ex(script,Preferencesv2::titleformat_data,"Invalid format script");
+			//Preferencesv1::g_advconfig_string_title_format.get_static_instance().get_state(format);
+			//static_api_ptr_t<titleformat_compiler>()->compile_safe(script, format);
+			pc->playback_format_title_ex(handle, NULL, text, script, NULL, play_control::display_level_titles);
+			snarl_title = text.toString();
 
-		//Get display timeout from user settings. If invalid, send error. Shouldn't happen max and min are set. 
-		snarl_time = (long) FooSnarl::Preferencesv1::g_advconfig_time.get_static_instance().get_state_int();
-		if((snarl_time==NULL)||(snarl_time==0)){
-			snarl_time = 5;
-			snarl_title = "ERROR";
-			snarl_msg = "Set valid display time in settings";
-		}
-
-		//Send Snarl Message
-		if(FSLastMsgClass != alertClass){
-			sn42.Hide(sn42.GetLastMsgToken());
-		}
-		FSLastMsgClass = alertClass;
-
-		if (sn42.IsVisible(lastClassMsg[alertClass]) == Snarl::V42::SnarlEnums::Success)
-		{
-			sn42.Update(lastClassMsg[alertClass], FSClass(alertClass),snarl_title.get_ptr(),snarl_msg.get_ptr(),snarl_time, snarl_icon.get_ptr(),snarl_icon_data.get_ptr(),0,0,0,0);
-		}
-		else
-		{
-			LONG32 ret = sn42.Notify(FSClass(alertClass), snarl_title.get_ptr(), snarl_msg.get_ptr(), snarl_time, snarl_icon.get_ptr(), snarl_icon_data.get_ptr(), 0, 0, 0,0);
-			if (ret > 0)
+			metadb_handle_list handle_list;
+			pfc::list_t<GUID> guid_list;
+			handle_list.add_item(handle);
+			guid_list.add_item( album_art_ids::cover_front );
+			try
 			{
-				FSAddActions();
+				//Get front cover album art if available
+				abort_callback_impl moo;
+				album_art_extractor_instance_v2::ptr art_instance = static_api_ptr_t<album_art_manager_v2>()->open( handle_list, guid_list, moo );
+				album_art_data_ptr art = art_instance->query( album_art_ids::cover_front, moo );
+				if ( art->get_size() )
+				{
+					base64_encode( snarl_icon_data, art->get_ptr(), art->get_size() );
+					snarl_icon = "";	
+				}
 			}
-			lastClassMsg[alertClass] = ret;
+			catch (...)
+			{
+				//Process title format string for message icon location
+				//Preferencesv1::g_advconfig_icon.get_static_instance().get_state(format);
+				//static_api_ptr_t<titleformat_compiler>()->compile_safe(script, format);
+				//pc->playback_format_title_ex(handle, NULL, text, script, NULL, play_control::display_level_titles);
+				//snarl_icon = text.toString();
+				snarl_icon=foobarIcon;
+			}
+
+			//Test for existance of folder.jpg picture file
+			/*DWORD attrib = GetFileAttributes(stringcvt::string_os_from_utf8(snarl_icon.get_ptr()));
+			if((snarl_icon.get_ptr()=="")||(0xFFFFFFFF == attrib)){
+			snarl_icon = foobarIcon;
+			}*/
+
+			//Get display timeout from user settings. If invalid, send error. Shouldn't happen max and min are set. 
+			snarl_time = (long) Preferencesv2::timeout_data;
+			//snarl_time = (long) Preferencesv1::g_advconfig_time.get_static_instance().get_state_int();
+			if((snarl_time==NULL)||(snarl_time==0)){
+				snarl_time = 5;
+				snarl_title = "ERROR";
+				snarl_msg = "Set valid display time in settings";
+			}
+
+			//Send Snarl Message
+			if(FSLastMsgClass != alertClass){
+				sn42.Hide(sn42.GetLastMsgToken());
+			}
+			FSLastMsgClass = alertClass;
+
+			if (sn42.IsVisible(lastClassMsg[alertClass]) == Snarl::V42::SnarlEnums::Success)
+			{
+				sn42.Update(lastClassMsg[alertClass], FSClass(alertClass),snarl_title.get_ptr(),snarl_msg.get_ptr(),snarl_time, snarl_icon.get_ptr(),snarl_icon_data.get_ptr(),0,0,0,0);
+			}
+			else
+			{
+				LONG32 ret = sn42.Notify(FSClass(alertClass), snarl_title.get_ptr(), snarl_msg.get_ptr(), snarl_time, snarl_icon.get_ptr(), snarl_icon_data.get_ptr(), 0, 0, 0,0);
+				if (ret > 0)
+				{
+					FSAddActions();
+				}
+				lastClassMsg[alertClass] = ret;
+			}
 		}
-	}
 
-	LONG32 FSAddActions(){
-	LONG32 token = sn42.GetLastMsgToken();
-	sn42.AddAction(token,"Back","@1");
-	sn42.AddAction(token,"Next","@2");
-	sn42.AddAction(token,"Stop","@3");
-	return 0;
-}
-
-public:
-	// play_callback methods
-	void on_playback_starting(play_control::t_track_command p_command,bool p_paused) {}
-	void on_playback_new_track(metadb_handle_ptr p_track) {
-		on_playback_event(FSMsgClass::Play);
-}
-	void  on_playback_stop(play_control::t_stop_reason p_reason) {
-	if(p_reason == play_control::stop_reason_eof || p_reason == play_control::stop_reason_user){
-		on_playback_event(Stop);
-	}
-}
-	void  on_playback_seek(double p_time) {}
-	void  on_playback_pause(bool p_state) {
-	if(p_state == true){
-		on_playback_event(FSMsgClass::Pause);
-	} else {
-		on_playback_event(FSMsgClass::Play);
-	}
-}
-	void  on_playback_edited(metadb_handle_ptr p_track) {}
-	void  on_playback_dynamic_info(const file_info & p_info) {}
-	void  on_playback_dynamic_info_track(const file_info &p_info) {
-	on_playback_event(FSMsgClass::Play);
-}
-	void  on_playback_time(double p_time) {}
-	void  on_volume_change(float p_new_val) {}
-};
-
-static play_callback_foosnarl pcb_foosnarl;
-
+		LONG32 FooSnarl::FooSnarl::FSAddActions(){
+			LONG32 token = sn42.GetLastMsgToken();
+			sn42.AddAction(token,"Back","@1");
+			sn42.AddAction(token,"Next","@2");
+			sn42.AddAction(token,"Stop","@3");
+			return 0;
+		}
 #pragma endregion
+
 
 #pragma region InitQuit
 class initquit_foosnarl : public initquit {
@@ -346,66 +316,8 @@ public:
 };
 #pragma endregion
 
-#pragma region Main Menu
-class mainmenu_commands_foosnarl : public mainmenu_commands {
-	
-	virtual t_uint32 get_command_count(){
-		return 1;
-	}
-
-	virtual GUID get_command(t_uint32 p_index){
-		// {E8D1828F-1AB8-4AC9-BDDC-F6DBB1456961}
-		static const GUID guid_foosnarl_main_showplaying = { 0xe8d1828f, 0x1ab8, 0x4ac9, { 0xbd, 0xdc, 0xf6, 0xdb, 0xb1, 0x45, 0x69, 0x61 } };
-		
-		if(p_index == 0 )
-			return guid_foosnarl_main_showplaying;
-		return pfc::guid_null;
-	}
-
-	//Set p_out to the name of the n-th command.
-	//This name is used to identify the command and determines
-	// the default position of the command in the menu.
-	virtual void get_name(t_uint32 p_index, pfc::string_base & p_out){
-		if(p_index == 0)
-			p_out = "Snarl Now Playing";
-	}
-
-	// Set p_out to the description for the n-th command.
-	virtual bool get_description(t_uint32 p_index, pfc::string_base & p_out){
-		if(p_index == 0)
-			p_out = "Snarl Now Playing";
-		else 
-			return false;
-		return true;
-	}
-
-	//Every set of commands needs to declare which group it  belongs to.
-	virtual GUID get_parent(){
-		return FooSnarl::Preferencesv1::guid_foosnarl_mainmenu_maingroup;
-	}
-
-	// Execute n-th command.
-	virtual void execute(t_uint32 p_index, service_ptr_t<service_base> p_callback){
-		if(p_index == 0 && core_api::assert_main_thread()){
-			//Execute Snarl Command here
-			metadb_handle_ptr np;
-			static_api_ptr_t<playback_control>()->get_now_playing(np);
-			pcb_foosnarl.on_playback_new_track(np);
-		}
-	}
-};
-#pragma endregion
-
 static void try_register()
 {
-	//Register Playcallback module
-	static_api_ptr_t<play_callback_manager> playCBM;
-	playCBM->register_callback(&pcb_foosnarl,play_callback_foosnarl::flag_on_playback_new_track| 
-								/*flag_on_playback_dynamic_info | */
-								play_callback_foosnarl::flag_on_playback_dynamic_info_track| 
-								play_callback_foosnarl::flag_on_playback_pause| 
-								play_callback_foosnarl::flag_on_playback_stop,true);
-
 	//Register Foobar2000 with Snarl
 	service_ptr_t<genrand_service> g_rand = genrand_service::g_create();
 	g_rand->seed( time( NULL ) );
@@ -435,7 +347,7 @@ static void try_register()
 static void try_unregister()
 {
 	//Unregister playcallback
-	static_api_ptr_t<play_callback_manager>()->unregister_callback(&pcb_foosnarl);
+	//static_api_ptr_t<play_callback_manager>()->unregister_callback(&pcb_foosnarl);
 
 	//Unregister foosnarl
 	LONG32 ret = sn42.ClearClasses();
@@ -491,7 +403,7 @@ void base64_encode(pfc::string_base & out, const unsigned char * data, unsigned 
 }
 #pragma endregion 
 
+
 //Register initquit, menu
 static initquit_factory_t< initquit_foosnarl > foo_snarl_initquit;
-static mainmenu_commands_factory_t<mainmenu_commands_foosnarl> foo_snarl_menu;
-static mainmenu_group_popup_factory mainmenu_group(FooSnarl::Preferencesv1::guid_foosnarl_mainmenu_maingroup, mainmenu_groups::view,mainmenu_commands::sort_priority_dontcare,"FooSnarl");
+

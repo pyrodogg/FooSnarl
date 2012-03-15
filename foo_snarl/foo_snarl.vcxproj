@@ -98,6 +98,9 @@
   <ItemGroup>
     <ClCompile Include="config.cpp" />
     <ClCompile Include="foo_snarl.cpp" />
+    <ClCompile Include="initquit.cpp" />
+    <ClCompile Include="menu.cpp" />
+    <ClCompile Include="play_callback.cpp" />
     <ClCompile Include="preferences.cpp" />
   </ItemGroup>
   <ItemGroup>
