@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008-2012, Skyler Kehren
+Copyright (c) 2008-2015, Skyler Kehren
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted 
@@ -29,11 +29,11 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 VALIDATE_COMPONENT_FILENAME("foo_snarl.dll");
 DECLARE_COMPONENT_VERSION(
 		"FooSnarl",
-		"2.0 ", 
+		"1.2.0", 
 		"Snarl notification interface for Foobar2000\n"
 		"Developed by: Skyler Kehren (Pyrodogg)\n"
 		"foosnarl at pyrodogg.com\n"
-		"Copyright (C) 2008-2012 Skyler Kehren\n"
+		"Copyright (C) 2008-2015 Skyler Kehren\n"
 		"Released under BSD License\n"
 		"Contributions by: Max Battcher");
 

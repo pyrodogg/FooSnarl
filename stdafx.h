@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008-2012, Skyler Kehren
+Copyright (c) 2008-2015, Skyler Kehren
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted 
@@ -24,12 +24,8 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 */
 
 #pragma once
-
-#include "../../foobar2000/sdk/foobar2000.h"
-#include "../../foobar2000/helpers/helpers.h"
-#include "../../SnarlInterface_V42/SnarlInterface.h"
-#include "../../foobar2000/ATLHelpers/ATLHelpers.h"
-#pragma comment(lib, "../../foobar2000/shared/shared.lib")
+#include "../../../SnarlInterface/V42/SnarlInterface.h"
+#include "../ATLHelpers/ATLHelpers.h"
 
 #include "resource.h"
 #include "config.h"
@@ -58,6 +54,6 @@ enum FSMsgClass : int {
 static FooSnarl::FooSnarl foo_snarl;
 
 #define COMPONENT_TITLE "FooSnarl"
-#define COMPONENT_VERSION = "2.0.0"
+#define COMPONENT_VERSION = "1.2.0"
 #define COMPONENT_NAME = "foo_snarl"
-#define COMPONENT_DESCRIPTION = "Snarl notification interface for Foobar2000 Developed by: Skyler Kehren (Pyrodogg) foosnarl at pyrodogg.com Copyright (C) 2008-2010 Skyler Kehren Released under BSD License"
+#define COMPONENT_DESCRIPTION = "Snarl notification interface for Foobar2000 Developed by: Skyler Kehren (Pyrodogg) foosnarl at pyrodogg.com Copyright (C) 2008-2015 Skyler Kehren Released under BSD License"

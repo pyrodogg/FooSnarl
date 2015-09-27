@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008-2011, Skyler Kehren
+Copyright (c) 2008-2015, Skyler Kehren
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted 
