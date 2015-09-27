@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008-2012, Skyler Kehren
+Copyright (c) 2008-2015, Skyler Kehren
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted 
@@ -24,21 +24,36 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 */
 
 #pragma once
-#include "stdafx.h"
+#include "../../../SnarlInterface/V42/SnarlInterface.h"
+#include "../ATLHelpers/ATLHelpers.h"
+
+#include "resource.h"
+#include "config.h"
+#include "preferences.h"
+#include <map>
+#include <strsafe.h>
+#include <time.h>
+
+#define _SECURE_ATL 1
 
 namespace FooSnarl{
-	namespace Preferencesv1 {
-		extern advconfig_string_factory g_advconfig_string_title_format;
-
-		extern advconfig_string_factory g_advconfig_string_format;
-
-		extern advconfig_string_factory g_advconfig_icon;
-
-		extern advconfig_integer_factory g_advconfig_time;
-
-		extern advconfig_string_factory g_advconfig_icon_default;
-
-		extern const GUID guid_foosnarl_mainmenu_maingroup;
-	}
+	class FooSnarl{
+	public:
+		void on_playback_event(int alertClass);
+		LONG32 FSAddActions();
+	};
 }
 
+enum FSMsgClass : int {
+	Stop = 0,
+	Play,
+	Pause,
+	Seek
+};
+
+static FooSnarl::FooSnarl foo_snarl;
+
+#define COMPONENT_TITLE "FooSnarl"
+#define COMPONENT_VERSION = "1.2.0"
+#define COMPONENT_NAME = "foo_snarl"
+#define COMPONENT_DESCRIPTION = "Snarl notification interface for Foobar2000 Developed by: Skyler Kehren (Pyrodogg) foosnarl at pyrodogg.com Copyright (C) 2008-2015 Skyler Kehren Released under BSD License"
