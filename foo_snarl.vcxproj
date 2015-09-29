@@ -75,6 +75,19 @@
       </IgnoreSpecificDefaultLibraries>
       <AdditionalDependencies>../shared/shared.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy "$(SolutionDir)$(Configuration)\foo_snarl.dll" "%appdata%\foobar2000\user-components\foo_snarl\" /Y
+powershell start-process 'C:\Program Files (x86)\foobar2000\foobar2000.exe'</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Copy foo_snarl.dll to foobar2000 user-components directory</Message>
+    </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>taskkill /f /fi "imagename eq foobar2000.exe"</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Stop foobar2000, if running.</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -101,6 +114,17 @@
     <ProjectReference>
       <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>
     </ProjectReference>
+    <PostBuildEvent>
+      <Command>xcopy "$(SolutionDir)$(Configuration)\foo_snarl.dll" "%appdata%\foobar2000\user-components\foo_snarl\" /Y
+powershell start-process 'C:\Program Files (x86)\foobar2000\foobar2000.exe'</Command>
+      <Message>Copy foo_snarl.dll to foobar2000 user-components directory</Message>
+    </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>taskkill /f /fi "imagename eq foobar2000.exe"</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Stop foobar2000, if running.</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="config.cpp" />
