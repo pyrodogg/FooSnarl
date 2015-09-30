@@ -28,7 +28,6 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 #include "../ATLHelpers/ATLHelpers.h"
 
 #include "resource.h"
-#include "config.h"
 #include "preferences.h"
 #include <map>
 #include <strsafe.h>
