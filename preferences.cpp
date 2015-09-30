@@ -27,17 +27,17 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 
 namespace FooSnarl {
 	namespace Preferencesv2 {
-		// {BD8A45C8-37DE-4285-9A39-A4B3D5A4FACC}
-		static const GUID guid_titleformat_data = { 0xbd8a45c8, 0x37de, 0x4285, { 0x9a, 0x39, 0xa4, 0xb3, 0xd5, 0xa4, 0xfa, 0xcc } };
-		cfg_string titleformat_data(guid_titleformat_data, "$if(%isplaying%,$if(%ispaused%,Paused,Now Playing),Stopped)");
+		static const GUID guid_titleformat_data = { 0xf6d66cdc, 0x872c, 0x48bc,{ 0xa7, 0x98, 0x1a, 0x6a, 0xab, 0x64, 0xcf, 0x45 } };
+		static const char* titleformat_default = "$if(%isplaying%,$if(%ispaused%,Paused,Now Playing),Stopped)";
+		cfg_string titleformat_data(guid_titleformat_data, titleformat_default);
 
-		// {03C469B9-D5F5-46B0-B217-97DF2BF44A2F}
-		static const GUID guid_textformat_data = { 0x3c469b9, 0xd5f5, 0x46b0, { 0xb2, 0x17, 0x97, 0xdf, 0x2b, 0xf4, 0x4a, 0x2f } };
-		cfg_string textformat_data(guid_textformat_data, "[%album artist%$crlf()]%title%");
+		static const GUID guid_textformat_data = { 0x76c6cd47, 0xf1b9, 0x49a7,{ 0x89, 0x44, 0x45, 0x90, 0x9a, 0x96, 0x7a, 0x7f } };
+		static const char* textformat_default = "[%album artist%$crlf()]%title%";
+		cfg_string textformat_data(guid_textformat_data, textformat_default);
 
-		// {B211CA86-2C01-4B4B-9DF1-72CE742C3123}
-		static const GUID guid_timeout = { 0xb211ca86, 0x2c01, 0x4b4b, { 0x9d, 0xf1, 0x72, 0xce, 0x74, 0x2c, 0x31, 0x23 } };
-		cfg_int timeout_data(guid_timeout, 5);
+		static const GUID guid_timeout = { 0xb224f26b, 0x9799, 0x40c0,{ 0x9f, 0x56, 0x87, 0x27, 0x70, 0x90, 0x1e, 0x9b } };
+		static const int32_t timeout_default = 5;
+		cfg_int timeout_data(guid_timeout, timeout_default);
 	}
 
 	class CMyPreferences : public CDialogImpl<CMyPreferences>, public preferences_page_instance {
@@ -53,6 +53,8 @@ namespace FooSnarl {
 			COMMAND_HANDLER_EX(IDC_TITLEFORMAT_DATA,EN_UPDATE, OnChanged)
 			COMMAND_HANDLER_EX(IDC_TEXTFORMAT_DATA, EN_UPDATE, OnChanged)
 			COMMAND_HANDLER_EX(IDC_TIMEOUT,EN_UPDATE,OnChanged)
+			COMMAND_HANDLER_EX(IDC_TITLEFORMAT_DATA, EN_SETFOCUS, OnSetFocus)
+			COMMAND_HANDLER_EX(IDC_TEXTFORMAT_DATA, EN_SETFOCUS, OnSetFocus)
 		END_MSG_MAP()
 
 	private:
@@ -71,7 +73,7 @@ namespace FooSnarl {
 
 			uSetWindowText(titleformat, Preferencesv2::titleformat_data);
 			uSetWindowText(textformat, Preferencesv2::textformat_data);
-			uSetWindowText(timeout,timeout_str.get_ptr());
+			uSetDlgItemInt(IDC_TIMEOUT, Preferencesv2::timeout_data,FALSE);
 
 			titleformat.EnableWindow(true);
 			textformat.EnableWindow(true);
@@ -100,11 +102,9 @@ namespace FooSnarl {
 		}
 
 		void apply(){
-			pfc::string8 temp;
 			uGetWindowText(titleformat, Preferencesv2::titleformat_data);
 			uGetWindowText(textformat, Preferencesv2::textformat_data);
-			uGetWindowText(timeout, temp);
-			Preferencesv2::timeout_data = atoi(temp);
+			Preferencesv2::timeout_data = uGetDlgItemInt(IDC_TIMEOUT, NULL, FALSE);
 		}
 
 		void on_change(){
@@ -113,15 +113,41 @@ namespace FooSnarl {
 		}
 
 		void reset(){
-			uSetWindowText(titleformat,"$if(%isplaying%,$if(%ispaused%,Paused,Now Playing),Stopped)");
-			uSetWindowText(textformat, "[%album artist%$crlf()]%title%");
-			uSetWindowText(timeout, "5");
+			uSetWindowText(titleformat, Preferencesv2::titleformat_default);
+			uSetWindowText(textformat, Preferencesv2::textformat_default);
+		    uSetDlgItemInt(IDC_TIMEOUT, Preferencesv2::timeout_default, FALSE);
 		}
 
-		void OnChanged(UINT, int, HWND){
+		void OnChanged(UINT, int, HWND c){
 			on_change();
+			if (c == titleformat || c == textformat) {
+				UpdatePreview(c);
+			}
 		}
 
+		void OnSetFocus(UINT, int, HWND c) {
+			UpdatePreview(c);
+		}
+
+		void UpdatePreview(HWND c) {
+			pfc::string formatstring = uGetWindowText(c);
+
+			static_api_ptr_t<playback_control> pc;
+			static_api_ptr_t<playlist_manager> pm;
+			metadb_handle_ptr handle;
+			service_ptr_t<titleformat_object> script;
+			pfc::string_formatter formattedtext;
+
+			if (!pc->get_now_playing(handle)) {
+				pm->activeplaylist_get_focus_item_handle(handle);
+			}
+			if (handle.is_empty()) return;
+
+			//Process title format string
+			static_api_ptr_t<titleformat_compiler>()->compile_safe_ex(script, formatstring.ptr(), "Invalid format script");
+			pc->playback_format_title_ex(handle, NULL, formattedtext, script, NULL, play_control::display_level_titles);
+			uSetWindowText(GetDlgItem(IDC_FORMATPREVIEW), formattedtext.toString());
+		}
 	};
 
 	class Preferences_Page_FooSnarl : public preferences_page_impl<CMyPreferences> {
@@ -141,7 +167,7 @@ namespace FooSnarl {
 		}
 
 		bool get_help_url(pfc::string_base & out){
-			out = "http://www.pyrodogg.com/foosnarl";
+			out = "https://github.com/pyrodogg/FooSnarl";
 			return true;
 		}
 
