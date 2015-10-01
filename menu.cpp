@@ -74,7 +74,7 @@ public:
 	void execute(t_uint32 p_index, service_ptr_t<service_base> p_callback){
 		switch (p_index) {
 			case cmd_nowplaying:
-				foo_snarl.on_playback_event(FSMsgClass::Play); break;
+				foo_snarl.on_playback_event(FSMsgClass::Auto); break;
 			default: uBugCheck();
 		}
 	}

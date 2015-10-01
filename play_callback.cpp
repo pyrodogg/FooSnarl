@@ -38,12 +38,10 @@ public:
 	// play_callback methods
 	void on_playback_starting(play_control::t_track_command p_command,bool p_paused) {}
 	void on_playback_new_track(metadb_handle_ptr p_track) {
-		//on_playback_event(FSMsgClass::Play);
 		foo_snarl.on_playback_event(FSMsgClass::Play);
 	}
 	void  on_playback_stop(play_control::t_stop_reason p_reason) {
 		if(p_reason == play_control::stop_reason_eof || p_reason == play_control::stop_reason_user){
-			//on_playback_event(Stop);
 			foo_snarl.on_playback_event(FSMsgClass::Stop);
 		}
 	}

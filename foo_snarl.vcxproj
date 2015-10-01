@@ -127,7 +127,6 @@ powershell start-process 'C:\Program Files (x86)\foobar2000\foobar2000.exe'</Com
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="config.cpp" />
     <ClCompile Include="foo_snarl.cpp" />
     <ClCompile Include="initquit.cpp" />
     <ClCompile Include="menu.cpp" />
@@ -135,7 +134,6 @@ powershell start-process 'C:\Program Files (x86)\foobar2000\foobar2000.exe'</Com
     <ClCompile Include="preferences.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="config.h" />
     <ClInclude Include="preferences.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
