@@ -55,6 +55,7 @@ namespace FooSnarl {
 			COMMAND_HANDLER_EX(IDC_TIMEOUT,EN_UPDATE,OnChanged)
 			COMMAND_HANDLER_EX(IDC_TITLEFORMAT_DATA, EN_SETFOCUS, OnSetFocus)
 			COMMAND_HANDLER_EX(IDC_TEXTFORMAT_DATA, EN_SETFOCUS, OnSetFocus)
+			COMMAND_HANDLER_EX(IDC_TESTBUTTON,BN_CLICKED,OnTestButtonClick)
 		END_MSG_MAP()
 
 	private:
@@ -127,6 +128,10 @@ namespace FooSnarl {
 
 		void OnSetFocus(UINT, int, HWND c) {
 			UpdatePreview(c);
+		}
+
+		void OnTestButtonClick(UINT, int, HWND) {
+			foo_snarl.SendSnarlMessage(FSMsgClass::Auto, uGetWindowText(titleformat), uGetWindowText(textformat), uGetDlgItemInt(IDC_TIMEOUT, NULL, FALSE));
 		}
 
 		void UpdatePreview(HWND c) {

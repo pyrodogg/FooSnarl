@@ -38,16 +38,17 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 namespace FooSnarl{
 	class FooSnarl{
 	public:
+		void SendSnarlMessage(int pAlertClass, pfc::string pTitleFormat, pfc::string pBodyFormat, int pTimeout);
 		void on_playback_event(int alertClass);
 		LONG32 FSAddActions();
 	};
 }
 
 enum FSMsgClass : int {
-	Stop = 0,
+	Auto = 0,
+	Stop,
 	Play,
-	Pause,
-	Seek
+	Pause
 };
 
 static FooSnarl::FooSnarl foo_snarl;
