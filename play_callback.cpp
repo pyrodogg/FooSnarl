@@ -38,25 +38,25 @@ public:
 	// play_callback methods
 	void on_playback_starting(play_control::t_track_command p_command,bool p_paused) {}
 	void on_playback_new_track(metadb_handle_ptr p_track) {
-		foo_snarl.on_playback_event(FSMsgClass::Play);
+		foo_snarl.on_playback_event(FooSnarl::MessageClass::Play);
 	}
 	void  on_playback_stop(play_control::t_stop_reason p_reason) {
 		if(p_reason == play_control::stop_reason_eof || p_reason == play_control::stop_reason_user){
-			foo_snarl.on_playback_event(FSMsgClass::Stop);
+			foo_snarl.on_playback_event(FooSnarl::MessageClass::Stop);
 		}
 	}
 	void  on_playback_seek(double p_time) {}
 	void  on_playback_pause(bool p_state) {
 		if(p_state == true){
-			foo_snarl.on_playback_event(FSMsgClass::Pause);
+			foo_snarl.on_playback_event(FooSnarl::MessageClass::Pause);
 		} else {
-			foo_snarl.on_playback_event(FSMsgClass::Play);
+			foo_snarl.on_playback_event(FooSnarl::MessageClass::Play);
 		}
 	}
 	void  on_playback_edited(metadb_handle_ptr p_track) {}
 	void  on_playback_dynamic_info(const file_info & p_info) {}
 	void  on_playback_dynamic_info_track(const file_info &p_info) {
-		foo_snarl.on_playback_event(FSMsgClass::Play);
+		foo_snarl.on_playback_event(FooSnarl::MessageClass::Play);
 	}
 	void  on_playback_time(double p_time) {}
 	void  on_volume_change(float p_new_val) {}

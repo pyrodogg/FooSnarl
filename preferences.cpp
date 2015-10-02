@@ -131,7 +131,7 @@ namespace FooSnarl {
 		}
 
 		void OnTestButtonClick(UINT, int, HWND) {
-			foo_snarl.SendSnarlMessage(FSMsgClass::Auto, uGetWindowText(titleformat), uGetWindowText(textformat), uGetDlgItemInt(IDC_TIMEOUT, NULL, FALSE));
+			foo_snarl.SendSnarlMessage(MessageClass::Auto, uGetWindowText(titleformat), uGetWindowText(textformat), uGetDlgItemInt(IDC_TIMEOUT, NULL, FALSE));
 		}
 
 		void UpdatePreview(HWND c) {

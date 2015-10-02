@@ -39,17 +39,17 @@ namespace FooSnarl{
 	class FooSnarl{
 	public:
 		void SendSnarlMessage(int pAlertClass, pfc::string pTitleFormat, pfc::string pBodyFormat, int pTimeout);
+		void RegisterSnarlClass(int intClass);
 		void on_playback_event(int alertClass);
-		LONG32 FSAddActions();
+	};
+
+	enum MessageClass : int {
+		Auto = 0,
+		Stop,
+		Play,
+		Pause
 	};
 }
-
-enum FSMsgClass : int {
-	Auto = 0,
-	Stop,
-	Play,
-	Pause
-};
 
 static FooSnarl::FooSnarl foo_snarl;
 
