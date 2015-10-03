@@ -40,27 +40,25 @@ DECLARE_COMPONENT_VERSION(
 Snarl::V42::SnarlInterface sn42;
 HWND hwndFooSnarlMsg;
 
-
 #pragma region Declarations
 inline char base64_char(unsigned char in);
 void base64_encode(pfc::string_base & out, const unsigned char * data, unsigned size);
 #pragma endregion 
 
-
 #pragma region Callback Window
-LRESULT CALLBACK WndProcFooSnarl(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam){
-	switch(message)
+LRESULT CALLBACK WndProcFooSnarl(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+	switch (message)
 	{
 	case WM_SHOWWINDOW:
-		if(wParam == TRUE){
+		if (wParam == TRUE) {
 			standard_commands::main_activate();
 		}
 	case WM_CLOSE:
 		DestroyWindow(hwnd);
 	default:
-		if (message == sn42.Broadcast())
+		if (message == Snarl::V42::SnarlInterface::Broadcast())
 		{
-			switch(wParam)
+			switch (wParam)
 			{
 			case Snarl::V42::SnarlEnums::SnarlLaunched:
 			case Snarl::V42::SnarlEnums::SnarlStarted:
@@ -75,39 +73,39 @@ LRESULT CALLBACK WndProcFooSnarl(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		}
 		break;
 	case WM_USER:
-		switch(LOWORD(wParam))
+		switch (LOWORD(wParam))
 		{
 		case Snarl::V42::SnarlEnums::SnarlQuit:
-			{
-				foo_snarl.try_unregister();
-				return 0;
-			}
+		{
+			foo_snarl.try_unregister();
+			return 0;
+		}
 		//case Snarl::V42::SnarlEnums::NotificationClicked:
 		case Snarl::V42::SnarlEnums::CallbackInvoked:
-			{
-				static_api_ptr_t<ui_control>()->activate();
-				return 0;
-			}
-	/*	case Snarl::V42::SnarlEnums::NotificationAck:
-			case Snarl::V42::SnarlEnums::call
-			{
-				return 0;
-			}*/
+		{
+			static_api_ptr_t<ui_control>()->activate();
+			return 0;
+		}
+		/*	case Snarl::V42::SnarlEnums::NotificationAck:
+		case Snarl::V42::SnarlEnums::call
+		{
+		return 0;
+		}*/
 		//case Snarl::V42::SnarlEnums::NotificationTimedOut:
 		case Snarl::V42::SnarlEnums::CallbackTimedOut:
-			{
-				return 0;
-			}
+		{
+			return 0;
+		}
 		case Snarl::V42::SnarlEnums::NotifyAction:
 			int action = HIWORD(wParam);
-			switch(action){
+			switch (action) {
 			case 1:
 				//Back action
-				static_api_ptr_t<playback_control>()->start(playback_control::track_command_prev,false);
+				static_api_ptr_t<playback_control>()->start(playback_control::track_command_prev, false);
 				return 0;
 			case 2:
 				//Next action
-				static_api_ptr_t<playback_control>()->start(playback_control::track_command_next,false);
+				static_api_ptr_t<playback_control>()->start(playback_control::track_command_next, false);
 				return 0;
 			case 3:
 				//Stop
@@ -116,7 +114,7 @@ LRESULT CALLBACK WndProcFooSnarl(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 			}
 		}
 	}
-	return DefWindowProc(hwnd,message,wParam,lParam);
+	return DefWindowProc(hwnd, message, wParam, lParam);
 }
 #pragma endregion
 
@@ -259,6 +257,22 @@ namespace FooSnarl {
 
 	void FooSnarl::try_register()
 	{
+		WNDCLASSEX wcex = { 0 };
+
+		wcex.cbSize = sizeof(WNDCLASSEX);
+		wcex.lpfnWndProc = (WNDPROC)WndProcFooSnarl;
+		wcex.hInstance = core_api::get_my_instance();
+		wcex.lpszClassName = _T("FooSnarlMsg");
+
+		RegisterClassEx(&wcex);
+
+		hwndFooSnarlMsg = CreateWindowEx(0, _T("FooSnarlMsg"), _T("FooSnarl Msg"), 0, 0, 0, 0, 0, GetDesktopWindow(), 0, 0, 0);
+
+		if (hwndFooSnarlMsg == NULL)
+		{
+			console::formatter() << "[FooSnarl] Unable to create message window (Error 0x" << pfc::format_int(GetLastError(), 0, 16) << ")";
+		}
+
 		uGetModuleFileName(NULL, foobarIcon);
 		foobarIcon += ",105";
 
@@ -302,51 +316,11 @@ namespace FooSnarl {
 		{
 			console::formatter() << "[FooSnarl] Failed to unregister with Snarl";
 		}
-	}
-}
-
-
-#pragma region InitQuit
-class initquit_foosnarl : public initquit {
-
-public:
-	void on_init()
-	{
-
-		WNDCLASSEX wcex = {0};
-	
-		wcex.cbSize = sizeof(WNDCLASSEX);
-		wcex.lpfnWndProc = (WNDPROC) WndProcFooSnarl;
-		wcex.hInstance = core_api::get_my_instance();
-		wcex.lpszClassName = _T("FooSnarlMsg");
-
-		RegisterClassEx(&wcex);
-	
-		
-		
-		hwndFooSnarlMsg = CreateWindowEx(0,_T("FooSnarlMsg"),_T("FooSnarl Msg"),0,0,0,0,0,GetDesktopWindow(),0,0,0);
-
-		if(hwndFooSnarlMsg == NULL)
-		{
-			console::formatter() << "[FooSnarl] Unable to create message window (Error 0x" << pfc::format_int(GetLastError(),0,16) << ")";
-		}
-
-		foo_snarl.try_register();	
-	}
-
-	void on_quit()
-	{
-		foo_snarl.try_unregister();
 
 		DestroyWindow(hwndFooSnarlMsg);
-		UnregisterClass(_T("FooSnarlMsg"),core_api::get_my_instance());
+		UnregisterClass(_T("FooSnarlMsg"), core_api::get_my_instance());
 	}
-
-};
-#pragma endregion
-
-
-
+}
 
 
 #pragma region Utility Functions
@@ -390,5 +364,3 @@ void base64_encode(pfc::string_base & out, const unsigned char * data, unsigned 
 #pragma endregion 
 
 
-//Register initquit, menu
-static initquit_factory_t< initquit_foosnarl > foo_snarl_initquit;
