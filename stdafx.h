@@ -43,6 +43,8 @@ namespace FooSnarl{
 		void on_playback_event(int alertClass);
 		void try_register();
 		void try_unregister();
+	private:
+		pfc::string8 foobarIcon;
 	};
 
 	enum MessageClass : int {

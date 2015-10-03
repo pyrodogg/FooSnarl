@@ -37,24 +37,14 @@ DECLARE_COMPONENT_VERSION(
 		"Released under BSD License\n"
 		"Contributions by: Max Battcher");
 
-pfc::string8 foobarIcon;
 Snarl::V42::SnarlInterface sn42;
-pfc::string8 snarl_password;
 HWND hwndFooSnarlMsg;
-std::map<int,char *> FSMsgClassDecode;
-LONG32 lastClassMsg[4] = {0,0,0,0};
-LONG32 lastMsg = 0;
-int FSLastMsgClass = 0;
-metadb_handle_ptr lastSong;
 
 
 #pragma region Declarations
-static void try_unregister();
 inline char base64_char(unsigned char in);
 void base64_encode(pfc::string_base & out, const unsigned char * data, unsigned size);
 #pragma endregion 
-
-
 
 
 #pragma region Callback Window
@@ -150,7 +140,7 @@ namespace FooSnarl {
 	}
 
 	void FooSnarl::RegisterSnarlClass(int intClass) {
-		LONG32 ret = sn42.AddClass(FSMsgClassDecode[intClass], FSMsgClassDecode[intClass], snarl_password.get_ptr());
+		LONG32 ret = sn42.AddClass(FSClass(intClass), FSClass(intClass));
 		if (ret < 0 && ret != -Snarl::V42::SnarlEnums::ErrorAlreadyRegistered)
 		{
 			console::formatter() << "[FooSnarl] Unable to register class " << intClass;
@@ -160,15 +150,18 @@ namespace FooSnarl {
 	void FooSnarl::SendSnarlMessage(int pAlertClass, pfc::string pTitleFormat, pfc::string pBodyFormat, int pTimeout) {
 		static_api_ptr_t<playback_control> pc;
 		static_api_ptr_t<playlist_manager> pm;
+		service_ptr_t<titleformat_object> script;
 		metadb_handle_ptr handle;
 		pfc::string8 format;
-		service_ptr_t<titleformat_object> script;
 		pfc::string_formatter text;
 		pfc::string snarl_title;
 		pfc::string snarl_msg;
 		pfc::string snarl_icon;
 		pfc::string8 snarl_icon_data;
 		long snarl_time;
+		static metadb_handle_ptr lastSong;
+		static int FSLastMsgClass = 0;
+		static LONG32 lastClassMsg[4] = { 0,0,0,0 };
 
 		//Get and store now playing. If false, then retrieve last playing.
 		if (pc->get_now_playing(handle)) {
@@ -266,7 +259,11 @@ namespace FooSnarl {
 
 	void FooSnarl::try_register()
 	{
+		uGetModuleFileName(NULL, foobarIcon);
+		foobarIcon += ",105";
+
 		//Register Foobar2000 with Snarl
+		pfc::string8 snarl_password;
 		service_ptr_t<genrand_service> g_rand = genrand_service::g_create();
 		g_rand->seed(time(NULL));
 		pfc::array_t<unsigned> junk;
@@ -315,9 +312,7 @@ class initquit_foosnarl : public initquit {
 public:
 	void on_init()
 	{
-		pfc::string8 image;
-		
-		static_api_ptr_t<ui_control> uiMain;
+
 		WNDCLASSEX wcex = {0};
 	
 		wcex.cbSize = sizeof(WNDCLASSEX);
@@ -325,14 +320,9 @@ public:
 		wcex.hInstance = core_api::get_my_instance();
 		wcex.lpszClassName = _T("FooSnarlMsg");
 
-		FSMsgClassDecode[FooSnarl::MessageClass::Play] = "Play";
-		FSMsgClassDecode[FooSnarl::MessageClass::Pause] = "Pause";
-		FSMsgClassDecode[FooSnarl::MessageClass::Stop] = "Stop";
-
 		RegisterClassEx(&wcex);
 	
-		uGetModuleFileName(NULL, foobarIcon);
-		foobarIcon += ",105";
+		
 		
 		hwndFooSnarlMsg = CreateWindowEx(0,_T("FooSnarlMsg"),_T("FooSnarl Msg"),0,0,0,0,0,GetDesktopWindow(),0,0,0);
 
@@ -348,7 +338,6 @@ public:
 	{
 		foo_snarl.try_unregister();
 
-		lastSong = 0;
 		DestroyWindow(hwndFooSnarlMsg);
 		UnregisterClass(_T("FooSnarlMsg"),core_api::get_my_instance());
 	}
