@@ -55,6 +55,41 @@ LRESULT CALLBACK WndProcFooSnarl(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		}
 	case WM_CLOSE:
 		DestroyWindow(hwnd);
+	
+	case WM_USER:
+		switch (LOWORD(wParam))
+		{
+		case Snarl::V42::SnarlEnums::SnarlQuit:
+		{
+			foo_snarl.try_unregister();
+			return 0;
+		}
+		case Snarl::V42::SnarlEnums::NotifyAction:
+			int action = HIWORD(wParam);
+
+			switch (action) {
+			case 1:
+				//Back action
+				standard_commands::main_previous();
+				return 0;
+			case 2:
+				//Next action
+				standard_commands::main_next();
+				return 0;
+			case 3:
+				//Stop
+				standard_commands::main_stop();
+				return 0;
+			case 4:
+				//Play
+				standard_commands::main_play();
+				return 0;
+			case 5:
+				//Pause
+				standard_commands::main_pause();
+				return 0;
+			}
+		}
 	default:
 		if (message == Snarl::V42::SnarlInterface::Broadcast())
 		{
@@ -72,48 +107,6 @@ LRESULT CALLBACK WndProcFooSnarl(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 			}
 		}
 		break;
-	case WM_USER:
-		switch (LOWORD(wParam))
-		{
-		case Snarl::V42::SnarlEnums::SnarlQuit:
-		{
-			foo_snarl.try_unregister();
-			return 0;
-		}
-		//case Snarl::V42::SnarlEnums::NotificationClicked:
-		case Snarl::V42::SnarlEnums::CallbackInvoked:
-		{
-			static_api_ptr_t<ui_control>()->activate();
-			return 0;
-		}
-		/*	case Snarl::V42::SnarlEnums::NotificationAck:
-		case Snarl::V42::SnarlEnums::call
-		{
-		return 0;
-		}*/
-		//case Snarl::V42::SnarlEnums::NotificationTimedOut:
-		case Snarl::V42::SnarlEnums::CallbackTimedOut:
-		{
-			return 0;
-		}
-		case Snarl::V42::SnarlEnums::NotifyAction:
-			int action = HIWORD(wParam);
-			switch (action) {
-			case 1:
-				//Back action
-				standard_commands::main_previous();
-				
-				return 0;
-			case 2:
-				//Next action
-				standard_commands::main_next();
-				return 0;
-			case 3:
-				//Stop
-				standard_commands::main_stop();
-				return 0;
-			}
-		}
 	}
 	return DefWindowProc(hwnd, message, wParam, lParam);
 }
@@ -139,7 +132,7 @@ namespace FooSnarl {
 	}
 
 	void FooSnarl::register_snarl_class(int intClass) {
-		LONG32 ret = sn42.AddClass(FSClass(intClass), FSClass(intClass));
+		LONG32 ret = sn42.AddClass(FSClass(intClass), FSClass(intClass),0,0,0,0,5);
 		if (ret < 0 && ret != -Snarl::V42::SnarlEnums::ErrorAlreadyRegistered)
 		{
 			console::formatter() << "[FooSnarl] Unable to register class " << intClass;
@@ -160,7 +153,6 @@ namespace FooSnarl {
 		long snarl_time;
 		static metadb_handle_ptr lastSong;
 		static int FSLastMsgClass = 0;
-		static LONG32 lastClassMsg[4] = { 0,0,0,0 };
 
 		//Get and store now playing. If false, then retrieve last playing.
 		if (pc->get_now_playing(handle)) {
@@ -221,12 +213,12 @@ namespace FooSnarl {
 		}
 
 		//Get display timeout from user settings. If invalid, send error.
-		snarl_time = (long)pTimeout;
-		if ((snarl_time == NULL) || (snarl_time == 0)) {
-			snarl_time = 5;
-			snarl_title = "ERROR";
-			snarl_msg = "Set valid display time in settings";
-		}
+		//snarl_time = (long)pTimeout;
+		//if ((snarl_time == NULL) || (snarl_time == 0)) {
+		//	snarl_time = 5;
+		//	snarl_title = "ERROR";
+		//	snarl_msg = "Set valid display time in settings";
+		//}
 
 		//Send Snarl Message
 		if (FSLastMsgClass != pAlertClass) {
@@ -234,21 +226,29 @@ namespace FooSnarl {
 		}
 		FSLastMsgClass = pAlertClass;
 
-		if (sn42.IsVisible(lastClassMsg[pAlertClass]) == Snarl::V42::SnarlEnums::Success)
+		if (sn42.IsVisible(sn42.GetLastMsgToken()) == Snarl::V42::SnarlEnums::Success)
 		{
-			sn42.Update(lastClassMsg[pAlertClass], FSClass(pAlertClass), snarl_title.get_ptr(), snarl_msg.get_ptr(), snarl_time, snarl_icon.get_ptr(), snarl_icon_data.get_ptr(), 0, 0, 0, 0);
+			sn42.Update(sn42.GetLastMsgToken(), FSClass(pAlertClass), snarl_title.get_ptr(), snarl_msg.get_ptr(), -1, snarl_icon.get_ptr(), snarl_icon_data.get_ptr());
 		}
 		else
 		{
-			LONG32 ret = sn42.Notify(FSClass(pAlertClass), snarl_title.get_ptr(), snarl_msg.get_ptr(), snarl_time, snarl_icon.get_ptr(), snarl_icon_data.get_ptr(), 0, 0, 0, 0);
+			LONG32 ret = sn42.Notify(FSClass(pAlertClass), snarl_title.get_ptr(), snarl_msg.get_ptr(), -1, snarl_icon.get_ptr(), snarl_icon_data.get_ptr());
 			if (ret > 0)
 			{
-				LONG32 token = sn42.GetLastMsgToken();
-				sn42.AddAction(token, "Back", "@1");
-				sn42.AddAction(token, "Next", "@2");
-				sn42.AddAction(token, "Stop", "@3");
+				switch (pAlertClass) {
+				case MessageClass::Play:
+					sn42.AddAction(ret, "Pause", "@5");
+					sn42.AddAction(ret, "Next", "@2");
+					sn42.AddAction(ret, "Previous", "@1");
+					break;
+				case MessageClass::Pause:
+				case MessageClass::Stop:
+					sn42.AddAction(ret, "Play", "@4");
+					sn42.AddAction(ret, "Next", "@2");
+					sn42.AddAction(ret, "Previous", "@1");
+					break;
+				}
 			}
-			lastClassMsg[pAlertClass] = ret;
 		}
 	}
 
