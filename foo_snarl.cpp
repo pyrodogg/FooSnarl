@@ -139,7 +139,7 @@ namespace FooSnarl {
 		}
 	}
 
-	void FooSnarl::send_snarl_message(int pAlertClass, pfc::string pTitleFormat, pfc::string pBodyFormat, int pTimeout) {
+	void FooSnarl::send_snarl_message(int pAlertClass, pfc::string pTitleFormat, pfc::string pBodyFormat) {
 		static_api_ptr_t<playback_control> pc;
 		static_api_ptr_t<playlist_manager> pm;
 		service_ptr_t<titleformat_object> script;
@@ -150,7 +150,6 @@ namespace FooSnarl {
 		pfc::string snarl_msg;
 		pfc::string snarl_icon;
 		pfc::string8 snarl_icon_data;
-		long snarl_time;
 		static metadb_handle_ptr lastSong;
 		static int FSLastMsgClass = 0;
 
@@ -212,14 +211,6 @@ namespace FooSnarl {
 			snarl_icon = foobarIcon;
 		}
 
-		//Get display timeout from user settings. If invalid, send error.
-		//snarl_time = (long)pTimeout;
-		//if ((snarl_time == NULL) || (snarl_time == 0)) {
-		//	snarl_time = 5;
-		//	snarl_title = "ERROR";
-		//	snarl_msg = "Set valid display time in settings";
-		//}
-
 		//Send Snarl Message
 		if (FSLastMsgClass != pAlertClass) {
 			sn42.Hide(sn42.GetLastMsgToken());
@@ -253,7 +244,7 @@ namespace FooSnarl {
 	}
 
 	void FooSnarl::on_playback_event(int alertClass) {
-		send_snarl_message(alertClass, Preferencesv2::titleformat_data, Preferencesv2::textformat_data, Preferencesv2::timeout_data);
+		send_snarl_message(alertClass, Preferencesv2::titleformat_data, Preferencesv2::textformat_data);
 	}
 
 	void FooSnarl::try_register()

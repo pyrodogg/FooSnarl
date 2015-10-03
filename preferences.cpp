@@ -35,9 +35,9 @@ namespace FooSnarl {
 		static const char* textformat_default = "[%album artist%$crlf()]%title%";
 		cfg_string textformat_data(guid_textformat_data, textformat_default);
 
-		static const GUID guid_timeout = { 0xb224f26b, 0x9799, 0x40c0,{ 0x9f, 0x56, 0x87, 0x27, 0x70, 0x90, 0x1e, 0x9b } };
+	/*	static const GUID guid_timeout = { 0xb224f26b, 0x9799, 0x40c0,{ 0x9f, 0x56, 0x87, 0x27, 0x70, 0x90, 0x1e, 0x9b } };
 		static const int32_t timeout_default = 5;
-		cfg_int timeout_data(guid_timeout, timeout_default);
+		cfg_int timeout_data(guid_timeout, timeout_default);*/
 	}
 
 	class CMyPreferences : public CDialogImpl<CMyPreferences>, public preferences_page_instance {
@@ -52,33 +52,24 @@ namespace FooSnarl {
 			MSG_WM_INITDIALOG(OnInitDialog)
 			COMMAND_HANDLER_EX(IDC_TITLEFORMAT_DATA,EN_UPDATE, OnChanged)
 			COMMAND_HANDLER_EX(IDC_TEXTFORMAT_DATA, EN_UPDATE, OnChanged)
-			COMMAND_HANDLER_EX(IDC_TIMEOUT,EN_UPDATE,OnChanged)
 			COMMAND_HANDLER_EX(IDC_TITLEFORMAT_DATA, EN_SETFOCUS, OnSetFocus)
 			COMMAND_HANDLER_EX(IDC_TEXTFORMAT_DATA, EN_SETFOCUS, OnSetFocus)
 			COMMAND_HANDLER_EX(IDC_TESTBUTTON,BN_CLICKED,OnTestButtonClick)
+			COMMAND_HANDLER_EX(IDC_SYNTAXHELP,NM_CLICK,OnSyntaxHelpClick)
 		END_MSG_MAP()
 
 	private:
 		CEdit titleformat;
 		CEdit textformat;
-		CEdit timeout;
 		const preferences_page_callback::ptr m_callback;
 
 		BOOL OnInitDialog(CWindow, LPARAM) {
-			console::info("Call InitDialog");
+			//console::info("Call InitDialog");
 			titleformat = GetDlgItem(IDC_TITLEFORMAT_DATA);
 			textformat = GetDlgItem(IDC_TEXTFORMAT_DATA);
-			timeout = GetDlgItem(IDC_TIMEOUT);
-
-			pfc::string timeout_str = pfc::toString<t_int32>(Preferencesv2::timeout_data);
-
+			
 			uSetWindowText(titleformat, Preferencesv2::titleformat_data);
 			uSetWindowText(textformat, Preferencesv2::textformat_data);
-			uSetDlgItemInt(IDC_TIMEOUT, Preferencesv2::timeout_data,FALSE);
-
-			titleformat.EnableWindow(true);
-			textformat.EnableWindow(true);
-			timeout.EnableWindow(true);
 
 			return FALSE;
 		}
@@ -90,9 +81,7 @@ namespace FooSnarl {
 			if(Preferencesv2::titleformat_data != temp) return true;
 			uGetWindowText(textformat,temp);
 			if(Preferencesv2::textformat_data != temp) return true;
-			uGetWindowText(timeout,temp);
-			if(Preferencesv2::timeout_data != atoi(temp)) return true;
-
+			
 			return false;
 		}
 
@@ -105,7 +94,6 @@ namespace FooSnarl {
 		void apply(){
 			uGetWindowText(titleformat, Preferencesv2::titleformat_data);
 			uGetWindowText(textformat, Preferencesv2::textformat_data);
-			Preferencesv2::timeout_data = uGetDlgItemInt(IDC_TIMEOUT, NULL, FALSE);
 		}
 
 		void on_change(){
@@ -116,7 +104,6 @@ namespace FooSnarl {
 		void reset(){
 			uSetWindowText(titleformat, Preferencesv2::titleformat_default);
 			uSetWindowText(textformat, Preferencesv2::textformat_default);
-		    uSetDlgItemInt(IDC_TIMEOUT, Preferencesv2::timeout_default, FALSE);
 		}
 
 		void OnChanged(UINT, int, HWND c){
@@ -131,7 +118,7 @@ namespace FooSnarl {
 		}
 
 		void OnTestButtonClick(UINT, int, HWND) {
-			foo_snarl.send_snarl_message(MessageClass::Auto, uGetWindowText(titleformat), uGetWindowText(textformat), uGetDlgItemInt(IDC_TIMEOUT, NULL, FALSE));
+			foo_snarl.send_snarl_message(MessageClass::Auto, uGetWindowText(titleformat), uGetWindowText(textformat)); //uGetDlgItemInt(IDC_TIMEOUT, NULL, FALSE)
 		}
 
 		void UpdatePreview(HWND c) {
@@ -152,6 +139,11 @@ namespace FooSnarl {
 			static_api_ptr_t<titleformat_compiler>()->compile_safe_ex(script, formatstring.ptr(), "Invalid format script");
 			pc->playback_format_title_ex(handle, NULL, formattedtext, script, NULL, play_control::display_level_titles);
 			uSetWindowText(GetDlgItem(IDC_FORMATPREVIEW), formattedtext.toString());
+		}
+
+		void OnSyntaxHelpClick(UINT, int, HWND) {
+			//Open syntax help file or browser window...
+			
 		}
 	};
 
