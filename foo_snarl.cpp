@@ -38,7 +38,7 @@ DECLARE_COMPONENT_VERSION(
 		"Contributions by: Max Battcher");
 
 Snarl::V42::SnarlInterface sn42;
-HWND hwndFooSnarlMsg;
+
 
 #pragma region Declarations
 inline char base64_char(unsigned char in);
@@ -101,15 +101,16 @@ LRESULT CALLBACK WndProcFooSnarl(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 			switch (action) {
 			case 1:
 				//Back action
-				static_api_ptr_t<playback_control>()->start(playback_control::track_command_prev, false);
+				standard_commands::main_previous();
+				
 				return 0;
 			case 2:
 				//Next action
-				static_api_ptr_t<playback_control>()->start(playback_control::track_command_next, false);
+				standard_commands::main_next();
 				return 0;
 			case 3:
 				//Stop
-				static_api_ptr_t<playback_control>()->stop();
+				standard_commands::main_stop();
 				return 0;
 			}
 		}
@@ -137,7 +138,7 @@ namespace FooSnarl {
 		}
 	}
 
-	void FooSnarl::RegisterSnarlClass(int intClass) {
+	void FooSnarl::register_snarl_class(int intClass) {
 		LONG32 ret = sn42.AddClass(FSClass(intClass), FSClass(intClass));
 		if (ret < 0 && ret != -Snarl::V42::SnarlEnums::ErrorAlreadyRegistered)
 		{
@@ -145,7 +146,7 @@ namespace FooSnarl {
 		}
 	}
 
-	void FooSnarl::SendSnarlMessage(int pAlertClass, pfc::string pTitleFormat, pfc::string pBodyFormat, int pTimeout) {
+	void FooSnarl::send_snarl_message(int pAlertClass, pfc::string pTitleFormat, pfc::string pBodyFormat, int pTimeout) {
 		static_api_ptr_t<playback_control> pc;
 		static_api_ptr_t<playlist_manager> pm;
 		service_ptr_t<titleformat_object> script;
@@ -252,7 +253,7 @@ namespace FooSnarl {
 	}
 
 	void FooSnarl::on_playback_event(int alertClass) {
-		SendSnarlMessage(alertClass, Preferencesv2::titleformat_data, Preferencesv2::textformat_data, Preferencesv2::timeout_data);
+		send_snarl_message(alertClass, Preferencesv2::titleformat_data, Preferencesv2::textformat_data, Preferencesv2::timeout_data);
 	}
 
 	void FooSnarl::try_register()
@@ -289,9 +290,9 @@ namespace FooSnarl {
 
 		if (ret > 0)
 		{
-			foo_snarl.RegisterSnarlClass(MessageClass::Play);
-			foo_snarl.RegisterSnarlClass(MessageClass::Pause);
-			foo_snarl.RegisterSnarlClass(MessageClass::Stop);
+			foo_snarl.register_snarl_class(MessageClass::Play);
+			foo_snarl.register_snarl_class(MessageClass::Pause);
+			foo_snarl.register_snarl_class(MessageClass::Stop);
 		}
 		else
 		{
@@ -321,7 +322,6 @@ namespace FooSnarl {
 		UnregisterClass(_T("FooSnarlMsg"), core_api::get_my_instance());
 	}
 }
-
 
 #pragma region Utility Functions
 inline char base64_char(unsigned char in)
