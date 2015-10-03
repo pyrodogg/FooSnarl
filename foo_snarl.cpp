@@ -49,7 +49,6 @@ metadb_handle_ptr lastSong;
 
 
 #pragma region Declarations
-static void try_register();
 static void try_unregister();
 inline char base64_char(unsigned char in);
 void base64_encode(pfc::string_base & out, const unsigned char * data, unsigned size);
@@ -75,12 +74,12 @@ LRESULT CALLBACK WndProcFooSnarl(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 			{
 			case Snarl::V42::SnarlEnums::SnarlLaunched:
 			case Snarl::V42::SnarlEnums::SnarlStarted:
-				try_register();
+				foo_snarl.try_register();
 				return 0;
 
 			case Snarl::V42::SnarlEnums::SnarlQuit:
 			case Snarl::V42::SnarlEnums::SnarlStopped:
-				try_unregister();
+				foo_snarl.try_unregister();
 				return 0;
 			}
 		}
@@ -90,7 +89,7 @@ LRESULT CALLBACK WndProcFooSnarl(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		{
 		case Snarl::V42::SnarlEnums::SnarlQuit:
 			{
-				try_unregister();
+				foo_snarl.try_unregister();
 				return 0;
 			}
 		//case Snarl::V42::SnarlEnums::NotificationClicked:
@@ -264,6 +263,49 @@ namespace FooSnarl {
 	void FooSnarl::on_playback_event(int alertClass) {
 		SendSnarlMessage(alertClass, Preferencesv2::titleformat_data, Preferencesv2::textformat_data, Preferencesv2::timeout_data);
 	}
+
+	void FooSnarl::try_register()
+	{
+		//Register Foobar2000 with Snarl
+		service_ptr_t<genrand_service> g_rand = genrand_service::g_create();
+		g_rand->seed(time(NULL));
+		pfc::array_t<unsigned> junk;
+		junk.set_count(4);
+		for (unsigned i = 0; i < 4; i++) junk[i] = g_rand->genrand(~0);
+		base64_encode(snarl_password, junk.get_ptr(), 16);
+
+		LONG32 ret = sn42.Register("Foobar2000", "Foobar2000", foobarIcon, snarl_password.get_ptr(), hwndFooSnarlMsg, WM_USER);
+
+		if (ret > 0)
+		{
+			foo_snarl.RegisterSnarlClass(MessageClass::Play);
+			foo_snarl.RegisterSnarlClass(MessageClass::Pause);
+			foo_snarl.RegisterSnarlClass(MessageClass::Stop);
+		}
+		else
+		{
+			if (ret != -Snarl::V42::SnarlEnums::ErrorNotRunning)
+			{
+				console::formatter() << "[FooSnarl] Unable to register with Snarl";
+			}
+		}
+	}
+
+	void FooSnarl::try_unregister()
+	{
+		//Unregister foosnarl
+		LONG32 ret = sn42.ClearClasses();
+		if (ret < 0 && ret != -Snarl::V42::SnarlEnums::ErrorNotRunning)
+		{
+			console::formatter() << "[FooSnarl] Failed to remove registered classes";
+		}
+
+		ret = sn42.Unregister("Foobar2000");
+		if (ret < 0 && ret != -Snarl::V42::SnarlEnums::ErrorNotRunning)
+		{
+			console::formatter() << "[FooSnarl] Failed to unregister with Snarl";
+		}
+	}
 }
 
 
@@ -299,12 +341,12 @@ public:
 			console::formatter() << "[FooSnarl] Unable to create message window (Error 0x" << pfc::format_int(GetLastError(),0,16) << ")";
 		}
 
-		try_register();	
+		foo_snarl.try_register();	
 	}
 
 	void on_quit()
 	{
-		try_unregister();
+		foo_snarl.try_unregister();
 
 		lastSong = 0;
 		DestroyWindow(hwndFooSnarlMsg);
@@ -314,48 +356,9 @@ public:
 };
 #pragma endregion
 
-static void try_register()
-{
-	//Register Foobar2000 with Snarl
-	service_ptr_t<genrand_service> g_rand = genrand_service::g_create();
-	g_rand->seed( time( NULL ) );
-	pfc::array_t<unsigned> junk;
-	junk.set_count( 4 );
-	for ( unsigned i = 0; i < 4; i++ ) junk[ i ] = g_rand->genrand( ~0 );
-	base64_encode( snarl_password, junk.get_ptr(), 16 );
 
-	LONG32 ret = sn42.Register("Foobar2000", "Foobar2000", foobarIcon,snarl_password.get_ptr(),hwndFooSnarlMsg, WM_USER);
 
-	if (ret > 0)
-	{
-		foo_snarl.RegisterSnarlClass(FooSnarl::MessageClass::Play);
-		foo_snarl.RegisterSnarlClass(FooSnarl::MessageClass::Pause);
-		foo_snarl.RegisterSnarlClass(FooSnarl::MessageClass::Stop);
-	}
-	else
-	{
-		if (ret != -Snarl::V42::SnarlEnums::ErrorNotRunning)
-		{
-			console::formatter() << "[FooSnarl] Unable to register with Snarl";
-		}
-	}
-}
 
-static void try_unregister()
-{
-	//Unregister foosnarl
-	LONG32 ret = sn42.ClearClasses();
-	if (ret < 0 && ret != -Snarl::V42::SnarlEnums::ErrorNotRunning)
-	{
-		console::formatter() << "[FooSnarl] Failed to remove registered classes";
-	}
-
-	ret = sn42.Unregister("Foobar2000");
-	if (ret < 0 && ret != -Snarl::V42::SnarlEnums::ErrorNotRunning)
-	{
-		console::formatter() << "[FooSnarl] Failed to unregister with Snarl";
-	}
-}
 
 #pragma region Utility Functions
 inline char base64_char(unsigned char in)

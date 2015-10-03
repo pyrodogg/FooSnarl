@@ -41,6 +41,8 @@ namespace FooSnarl{
 		void SendSnarlMessage(int pAlertClass, pfc::string pTitleFormat, pfc::string pBodyFormat, int pTimeout);
 		void RegisterSnarlClass(int intClass);
 		void on_playback_event(int alertClass);
+		void try_register();
+		void try_unregister();
 	};
 
 	enum MessageClass : int {
