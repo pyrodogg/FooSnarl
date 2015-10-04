@@ -138,7 +138,7 @@ namespace FooSnarl {
 		}
 	}
 
-	void FooSnarl::send_snarl_message(int pAlertClass, pfc::string pTitleFormat, pfc::string pBodyFormat) {
+	void FooSnarl::send_snarl_message(int pAlertClass, pfc::string pTitleFormat, pfc::string pBodyFormat, bool pEnableActions) {
 		static_api_ptr_t<playback_control> pc;
 		static_api_ptr_t<playlist_manager> pm;
 		service_ptr_t<titleformat_object> script;
@@ -222,7 +222,7 @@ namespace FooSnarl {
 		else
 		{
 			LONG32 ret = sn42.Notify(FSClass(pAlertClass), snarl_title.get_ptr(), snarl_msg.get_ptr(), -1, snarl_icon.get_ptr(), snarl_icon_data.get_ptr());
-			if (ret > 0)
+			if (ret > 0 && pEnableActions)
 			{
 				switch (pAlertClass) {
 				case MessageClass::Play:
@@ -242,7 +242,7 @@ namespace FooSnarl {
 	}
 
 	void FooSnarl::on_playback_event(int alertClass) {
-		send_snarl_message(alertClass, Preferencesv2::titleformat_data, Preferencesv2::textformat_data);
+		send_snarl_message(alertClass, Preferences::titleformat_data, Preferences::textformat_data, Preferences::enable_actions_data);
 	}
 
 	void FooSnarl::try_register()

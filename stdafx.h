@@ -35,7 +35,7 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 namespace FooSnarl{
 	class FooSnarl{
 	public:
-		void send_snarl_message(int pAlertClass, pfc::string pTitleFormat, pfc::string pBodyFormat);
+		void send_snarl_message(int pAlertClass, pfc::string pTitleFormat, pfc::string pBodyFormat, bool pEnableActions);
 		void register_snarl_class(int intClass);
 		void on_playback_event(int alertClass);
 		void try_register();

@@ -26,7 +26,7 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 #include "stdafx.h"
 
 namespace FooSnarl {
-	namespace Preferencesv2 {
+	namespace Preferences {
 		static const GUID guid_titleformat_data = { 0xf6d66cdc, 0x872c, 0x48bc,{ 0xa7, 0x98, 0x1a, 0x6a, 0xab, 0x64, 0xcf, 0x45 } };
 		static const char* titleformat_default = "$if(%isplaying%,$if(%ispaused%,Paused,Now Playing),Stopped)";
 		cfg_string titleformat_data(guid_titleformat_data, titleformat_default);
@@ -34,6 +34,11 @@ namespace FooSnarl {
 		static const GUID guid_textformat_data = { 0x76c6cd47, 0xf1b9, 0x49a7,{ 0x89, 0x44, 0x45, 0x90, 0x9a, 0x96, 0x7a, 0x7f } };
 		static const char* textformat_default = "[%album artist%$crlf()]%title%";
 		cfg_string textformat_data(guid_textformat_data, textformat_default);
+
+		// {71CACCA2-7291-44DB-9168-49E50F6F2152}
+		static const GUID guid_enable_actions_data = { 0x71cacca2, 0x7291, 0x44db,{ 0x91, 0x68, 0x49, 0xe5, 0xf, 0x6f, 0x21, 0x52 } };
+		static const bool enable_actions_default = true;
+		cfg_bool enable_actions_data(guid_enable_actions_data, enable_actions_default);
 
 	/*	static const GUID guid_timeout = { 0xb224f26b, 0x9799, 0x40c0,{ 0x9f, 0x56, 0x87, 0x27, 0x70, 0x90, 0x1e, 0x9b } };
 		static const int32_t timeout_default = 5;
@@ -52,6 +57,7 @@ namespace FooSnarl {
 			MSG_WM_INITDIALOG(OnInitDialog)
 			COMMAND_HANDLER_EX(IDC_TITLEFORMAT_DATA,EN_UPDATE, OnChanged)
 			COMMAND_HANDLER_EX(IDC_TEXTFORMAT_DATA, EN_UPDATE, OnChanged)
+			COMMAND_HANDLER_EX(IDC_ENABLEACTIONS,BN_CLICKED,OnChanged)
 			COMMAND_HANDLER_EX(IDC_TITLEFORMAT_DATA, EN_SETFOCUS, OnSetFocus)
 			COMMAND_HANDLER_EX(IDC_TEXTFORMAT_DATA, EN_SETFOCUS, OnSetFocus)
 			COMMAND_HANDLER_EX(IDC_TESTBUTTON,BN_CLICKED,OnTestButtonClick)
@@ -61,16 +67,18 @@ namespace FooSnarl {
 	private:
 		CEdit titleformat;
 		CEdit textformat;
+		CEdit enableactions;
 		const preferences_page_callback::ptr m_callback;
 
 		BOOL OnInitDialog(CWindow, LPARAM) {
-			//console::info("Call InitDialog");
 			titleformat = GetDlgItem(IDC_TITLEFORMAT_DATA);
 			textformat = GetDlgItem(IDC_TEXTFORMAT_DATA);
+			enableactions = GetDlgItem(IDC_ENABLEACTIONS);
 			
-			uSetWindowText(titleformat, Preferencesv2::titleformat_data);
-			uSetWindowText(textformat, Preferencesv2::textformat_data);
-
+			uSetWindowText(titleformat, Preferences::titleformat_data);
+			uSetWindowText(textformat, Preferences::textformat_data);
+			CheckDlgButton(IDC_ENABLEACTIONS, Preferences::enable_actions_data);
+			
 			return FALSE;
 		}
 
@@ -78,10 +86,11 @@ namespace FooSnarl {
 			pfc::string8 temp;
 
 			uGetWindowText(titleformat,temp);
-			if(Preferencesv2::titleformat_data != temp) return true;
+			if(Preferences::titleformat_data != temp) return true;
 			uGetWindowText(textformat,temp);
-			if(Preferencesv2::textformat_data != temp) return true;
-			
+			if(Preferences::textformat_data != temp) return true;
+			if (Preferences::enable_actions_data != (bool) IsDlgButtonChecked(IDC_ENABLEACTIONS)) return true;
+
 			return false;
 		}
 
@@ -92,8 +101,9 @@ namespace FooSnarl {
 		}
 
 		void apply(){
-			uGetWindowText(titleformat, Preferencesv2::titleformat_data);
-			uGetWindowText(textformat, Preferencesv2::textformat_data);
+			uGetWindowText(titleformat, Preferences::titleformat_data);
+			uGetWindowText(textformat, Preferences::textformat_data);
+			Preferences::enable_actions_data = (bool)IsDlgButtonChecked(IDC_ENABLEACTIONS);
 		}
 
 		void on_change(){
@@ -102,8 +112,9 @@ namespace FooSnarl {
 		}
 
 		void reset(){
-			uSetWindowText(titleformat, Preferencesv2::titleformat_default);
-			uSetWindowText(textformat, Preferencesv2::textformat_default);
+			uSetWindowText(titleformat, Preferences::titleformat_default);
+			uSetWindowText(textformat, Preferences::textformat_default);
+			CheckDlgButton(IDC_ENABLEACTIONS, Preferences::enable_actions_default);
 		}
 
 		void OnChanged(UINT, int, HWND c){
@@ -118,7 +129,7 @@ namespace FooSnarl {
 		}
 
 		void OnTestButtonClick(UINT, int, HWND) {
-			foo_snarl.send_snarl_message(MessageClass::Auto, uGetWindowText(titleformat), uGetWindowText(textformat)); //uGetDlgItemInt(IDC_TIMEOUT, NULL, FALSE)
+			foo_snarl.send_snarl_message(MessageClass::Auto, uGetWindowText(titleformat), uGetWindowText(textformat),(bool)IsDlgButtonChecked(IDC_ENABLEACTIONS)); //uGetDlgItemInt(IDC_TIMEOUT, NULL, FALSE)
 		}
 
 		void UpdatePreview(HWND c) {
