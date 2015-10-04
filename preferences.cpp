@@ -68,12 +68,18 @@ namespace FooSnarl {
 		CEdit titleformat;
 		CEdit textformat;
 		CEdit enableactions;
+		CEdit dlg_title;
 		const preferences_page_callback::ptr m_callback;
 
 		BOOL OnInitDialog(CWindow, LPARAM) {
 			titleformat = GetDlgItem(IDC_TITLEFORMAT_DATA);
 			textformat = GetDlgItem(IDC_TEXTFORMAT_DATA);
 			enableactions = GetDlgItem(IDC_ENABLEACTIONS);
+			dlg_title = GetDlgItem(IDC_TITLE);
+			
+			CFont *m_pFont = new CFont();
+			m_pFont->CreatePointFont(128, _T("Microsoft Sans Serif"), 0, true, false);
+			dlg_title.SetFont(m_pFont->m_hFont, TRUE);
 			
 			uSetWindowText(titleformat, Preferences::titleformat_data);
 			uSetWindowText(textformat, Preferences::textformat_data);
