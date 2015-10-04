@@ -55,7 +55,7 @@ namespace FooSnarl {
 			COMMAND_HANDLER_EX(IDC_TITLEFORMAT_DATA, EN_SETFOCUS, OnSetFocus)
 			COMMAND_HANDLER_EX(IDC_TEXTFORMAT_DATA, EN_SETFOCUS, OnSetFocus)
 			COMMAND_HANDLER_EX(IDC_TESTBUTTON,BN_CLICKED,OnTestButtonClick)
-			COMMAND_HANDLER_EX(IDC_SYNTAXHELP,NM_CLICK,OnSyntaxHelpClick)
+			NOTIFY_HANDLER_EX(IDC_SYNTAXHELP,NM_CLICK, OnSyntaxHelpClick)
 		END_MSG_MAP()
 
 	private:
@@ -141,9 +141,10 @@ namespace FooSnarl {
 			uSetWindowText(GetDlgItem(IDC_FORMATPREVIEW), formattedtext.toString());
 		}
 
-		void OnSyntaxHelpClick(UINT, int, HWND) {
+		LRESULT OnSyntaxHelpClick(NMHDR *pNotifyStruct) {
 			//Open syntax help file or browser window...
-			
+			ShellExecuteA(NULL, "open", "http://wiki.hydrogenaud.io/index.php?title=Foobar2000:Titleformat_Reference", NULL, NULL, SW_SHOWNORMAL);
+			return 0;
 		}
 	};
 
