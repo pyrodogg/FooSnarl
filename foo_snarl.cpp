@@ -28,7 +28,7 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 VALIDATE_COMPONENT_FILENAME("foo_snarl.dll");
 DECLARE_COMPONENT_VERSION(
 		"FooSnarl",
-		"1.2.0", 
+		"2.0 beta", 
 		"Snarl notification interface for Foobar2000\n"
 		"Developed by: Skyler Kehren (Pyrodogg)\n"
 		"foosnarl at pyrodogg.com\n"
