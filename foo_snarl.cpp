@@ -25,7 +25,6 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 
 #include "stdafx.h"
 
-
 VALIDATE_COMPONENT_FILENAME("foo_snarl.dll");
 DECLARE_COMPONENT_VERSION(
 		"FooSnarl",
@@ -37,326 +36,279 @@ DECLARE_COMPONENT_VERSION(
 		"Released under BSD License\n"
 		"Contributions by: Max Battcher");
 
-pfc::string8 foobarIcon;
 Snarl::V42::SnarlInterface sn42;
-pfc::string8 snarl_password;
-HWND hwndFooSnarlMsg;
-std::map<int,char *> FSMsgClassDecode;
-LONG32 lastClassMsg[4] = {0,0,0,0};
-LONG32 lastMsg = 0;
-int FSLastMsgClass = 0;
-metadb_handle_ptr lastSong;
 
 
 #pragma region Declarations
-static void try_register();
-static void try_unregister();
 inline char base64_char(unsigned char in);
 void base64_encode(pfc::string_base & out, const unsigned char * data, unsigned size);
 #pragma endregion 
 
-LPSTR FSClass(int intclass){
-	switch(intclass){
-		case FSMsgClass::Play:
-			return "Play";
-			break;
-		case FSMsgClass::Pause:
-			return "Pause";
-			break;
-		case FSMsgClass::Stop:
-			return "Stop";
-			break;
-		default: 
-			return "";
-			break;
-	}
-}
-
-void FSRegisterClass(int intClass){
-	LONG32 ret = sn42.AddClass(FSMsgClassDecode[intClass], FSMsgClassDecode[intClass], snarl_password.get_ptr());
-	if ( ret < 0 && ret != -Snarl::V42::SnarlEnums::ErrorAlreadyRegistered )
-	{
-		console::formatter() << "[FooSnarl] Unable to register class " << intClass;
-	}
-}
-
 #pragma region Callback Window
-LRESULT CALLBACK WndProcFooSnarl(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam){
-	switch(message)
+LRESULT CALLBACK WndProcFooSnarl(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+	switch (message)
 	{
 	case WM_SHOWWINDOW:
-		if(wParam == TRUE){
+		if (wParam == TRUE) {
 			standard_commands::main_activate();
 		}
 	case WM_CLOSE:
 		DestroyWindow(hwnd);
-	default:
-		if (message == sn42.Broadcast())
+	
+	case WM_USER:
+		switch (LOWORD(wParam))
 		{
-			switch(wParam)
+		case Snarl::V42::SnarlEnums::SnarlQuit:
+		{
+			foo_snarl.try_unregister();
+			return 0;
+		}
+		case Snarl::V42::SnarlEnums::NotifyAction:
+			int action = HIWORD(wParam);
+
+			switch (action) {
+			case 1:
+				//Back action
+				standard_commands::main_previous();
+				return 0;
+			case 2:
+				//Next action
+				standard_commands::main_next();
+				return 0;
+			case 3:
+				//Stop
+				standard_commands::main_stop();
+				return 0;
+			case 4:
+				//Play
+				standard_commands::main_play();
+				return 0;
+			case 5:
+				//Pause
+				standard_commands::main_pause();
+				return 0;
+			}
+		}
+	default:
+		if (message == Snarl::V42::SnarlInterface::Broadcast())
+		{
+			switch (wParam)
 			{
 			case Snarl::V42::SnarlEnums::SnarlLaunched:
 			case Snarl::V42::SnarlEnums::SnarlStarted:
-				try_register();
+				foo_snarl.try_register();
 				return 0;
 
 			case Snarl::V42::SnarlEnums::SnarlQuit:
 			case Snarl::V42::SnarlEnums::SnarlStopped:
-				try_unregister();
+				foo_snarl.try_unregister();
 				return 0;
 			}
 		}
 		break;
-	case WM_USER:
-		switch(LOWORD(wParam))
-		{
-		case Snarl::V42::SnarlEnums::SnarlQuit:
-			{
-				try_unregister();
-				return 0;
-			}
-		//case Snarl::V42::SnarlEnums::NotificationClicked:
-		case Snarl::V42::SnarlEnums::CallbackInvoked:
-			{
-				static_api_ptr_t<ui_control>()->activate();
-				return 0;
-			}
-	/*	case Snarl::V42::SnarlEnums::NotificationAck:
-			case Snarl::V42::SnarlEnums::call
-			{
-				return 0;
-			}*/
-		//case Snarl::V42::SnarlEnums::NotificationTimedOut:
-		case Snarl::V42::SnarlEnums::CallbackTimedOut:
-			{
-				return 0;
-			}
-		case Snarl::V42::SnarlEnums::NotifyAction:
-			int action = HIWORD(wParam);
-			switch(action){
-			case 1:
-				//Back action
-				static_api_ptr_t<playback_control>()->start(playback_control::track_command_prev,false);
-				return 0;
-			case 2:
-				//Next action
-				static_api_ptr_t<playback_control>()->start(playback_control::track_command_next,false);
-				return 0;
-			case 3:
-				//Stop
-				static_api_ptr_t<playback_control>()->stop();
-				return 0;
-			}
-		}
 	}
-	return DefWindowProc(hwnd,message,wParam,lParam);
+	return DefWindowProc(hwnd, message, wParam, lParam);
 }
 #pragma endregion
 
-#pragma region FooSnarl
+namespace FooSnarl {
 
-		void FooSnarl::FooSnarl::SendSnarlMessage(int pAlertClass, pfc::string pTitleFormat, pfc::string pBodyFormat, int pTimeout) {
-			static_api_ptr_t<playback_control> pc;
-			static_api_ptr_t<playlist_manager> pm;
-			metadb_handle_ptr handle;
-			pfc::string8 format;
-			service_ptr_t<titleformat_object> script;
-			pfc::string_formatter text;
-			pfc::string snarl_title;
-			pfc::string snarl_msg;
-			pfc::string snarl_icon;
-			pfc::string8 snarl_icon_data;
-			long snarl_time;
+	LPSTR FSClass(int intclass) {
+		switch (intclass) {
+		case MessageClass::Play:
+			return "Play";
+			break;
+		case MessageClass::Pause:
+			return "Pause";
+			break;
+		case MessageClass::Stop:
+			return "Stop";
+			break;
+		default:
+			return "";
+			break;
+		}
+	}
 
-			//Get and store now playing. If false, then retrieve last playing.
-			if (pc->get_now_playing(handle)) {
-				lastSong.copy(handle);
+	void FooSnarl::register_snarl_class(int intClass) {
+		LONG32 ret = sn42.AddClass(FSClass(intClass), FSClass(intClass),0,0,0,0,5);
+		if (ret < 0 && ret != -Snarl::V42::SnarlEnums::ErrorAlreadyRegistered)
+		{
+			console::formatter() << "[FooSnarl] Unable to register class " << intClass;
+		}
+	}
+
+	void FooSnarl::send_snarl_message(int pAlertClass, pfc::string pTitleFormat, pfc::string pBodyFormat, bool pEnableActions) {
+		static_api_ptr_t<playback_control> pc;
+		static_api_ptr_t<playlist_manager> pm;
+		service_ptr_t<titleformat_object> script;
+		metadb_handle_ptr handle;
+		pfc::string_formatter text_formatted;
+		pfc::string snarl_title;
+		pfc::string snarl_msg;
+		pfc::string snarl_icon;
+		pfc::string8 snarl_icon_data;
+		static metadb_handle_ptr handle_last_song;
+		static int FSLastMsgClass = 0;
+
+		//Get and store now playing. If false, then retrieve last playing.
+		if (pc->get_now_playing(handle)) {
+			handle_last_song.copy(handle);
+		}
+		else {
+			handle.copy(handle_last_song);
+		}
+
+		//If not playing and no stored handle, get focused playlist item.
+		if (handle.is_empty()) pm->activeplaylist_get_focus_item_handle(handle);
+
+		//If no handle is identified, then exit.
+		if (handle.is_empty()) return;
+
+		if (pAlertClass == MessageClass::Auto) {
+			if (pc->is_paused()) {
+				pAlertClass = MessageClass::Pause;
+			}
+			else if (pc->is_playing()) {
+				pAlertClass = MessageClass::Play;
 			}
 			else {
-				handle.copy(lastSong);
-			}
-
-			//If not playing and no stored handle, get focused playlist item.
-			if (handle.is_empty()) pm->activeplaylist_get_focus_item_handle(handle);
-
-			//If no handle is identified, then exit.
-			if (handle.is_empty()) return;
-
-			if (pAlertClass == FSMsgClass::Auto) {
-				if (pc->is_paused()) {
-					pAlertClass = FSMsgClass::Pause;
-				}
-				else if (pc->is_playing()) {
-					pAlertClass = FSMsgClass::Play;
-				}
-				else {
-					pAlertClass = FSMsgClass::Stop;
-				}
-			}			
-
-			//Process title format string for message body
-			static_api_ptr_t<titleformat_compiler>()->compile_safe_ex(script, pBodyFormat.get_ptr(), "Invalid format script");
-			pc->playback_format_title_ex(handle, NULL, text, script, NULL, play_control::display_level_titles);
-			snarl_msg = text.toString();
-
-			//Process title format string for message title
-			static_api_ptr_t<titleformat_compiler>()->compile_safe_ex(script, pTitleFormat.get_ptr(), "Invalid format script");
-			pc->playback_format_title_ex(handle, NULL, text, script, NULL, play_control::display_level_titles);
-			snarl_title = text.toString();
-
-			metadb_handle_list handle_list;
-			pfc::list_t<GUID> guid_list;
-			handle_list.add_item(handle);
-			guid_list.add_item(album_art_ids::cover_front);
-			try
-			{
-				//Get front cover album art if available
-				abort_callback_impl moo;
-				album_art_extractor_instance_v2::ptr art_instance = static_api_ptr_t<album_art_manager_v2>()->open(handle_list, guid_list, moo);
-				album_art_data_ptr art = art_instance->query(album_art_ids::cover_front, moo);
-				if (art->get_size())
-				{
-					base64_encode(snarl_icon_data, art->get_ptr(), art->get_size());
-					snarl_icon = "";
-				}
-			}
-			catch (...)
-			{
-				//Use foobar2000 icon if album art isn't available.
-				snarl_icon = foobarIcon;
-			}
-
-			//Get display timeout from user settings. If invalid, send error.
-			snarl_time = (long) pTimeout;
-			if ((snarl_time == NULL) || (snarl_time == 0)) {
-				snarl_time = 5;
-				snarl_title = "ERROR";
-				snarl_msg = "Set valid display time in settings";
-			}
-
-			//Send Snarl Message
-			if (FSLastMsgClass != pAlertClass) {
-				sn42.Hide(sn42.GetLastMsgToken());
-			}
-			FSLastMsgClass = pAlertClass;
-
-			if (sn42.IsVisible(lastClassMsg[pAlertClass]) == Snarl::V42::SnarlEnums::Success)
-			{
-				sn42.Update(lastClassMsg[pAlertClass], FSClass(pAlertClass), snarl_title.get_ptr(), snarl_msg.get_ptr(), snarl_time, snarl_icon.get_ptr(), snarl_icon_data.get_ptr(), 0, 0, 0, 0);
-			}
-			else
-			{
-				LONG32 ret = sn42.Notify(FSClass(pAlertClass), snarl_title.get_ptr(), snarl_msg.get_ptr(), snarl_time, snarl_icon.get_ptr(), snarl_icon_data.get_ptr(), 0, 0, 0, 0);
-				if (ret > 0)
-				{
-					FSAddActions();
-				}
-				lastClassMsg[pAlertClass] = ret;
+				pAlertClass = MessageClass::Stop;
 			}
 		}
 
-		void FooSnarl::FooSnarl::on_playback_event(int alertClass) {
-			SendSnarlMessage(alertClass, Preferencesv2::titleformat_data, Preferencesv2::textformat_data, Preferencesv2::timeout_data);
+		//Process title format string for message body
+		static_api_ptr_t<titleformat_compiler>()->compile_safe_ex(script, pBodyFormat.get_ptr(), "Invalid format script");
+		pc->playback_format_title_ex(handle, NULL, text_formatted, script, NULL, play_control::display_level_titles);
+		snarl_msg = text_formatted.toString();
+
+		//Process title format string for message title
+		static_api_ptr_t<titleformat_compiler>()->compile_safe_ex(script, pTitleFormat.get_ptr(), "Invalid format script");
+		pc->playback_format_title_ex(handle, NULL, text_formatted, script, NULL, play_control::display_level_titles);
+		snarl_title = text_formatted.toString();
+
+		metadb_handle_list handle_list;
+		pfc::list_t<GUID> guid_list;
+		handle_list.add_item(handle);
+		guid_list.add_item(album_art_ids::cover_front);
+		try
+		{
+			//Get front cover album art if available
+			abort_callback_impl moo;
+			album_art_extractor_instance_v2::ptr art_instance = static_api_ptr_t<album_art_manager_v2>()->open(handle_list, guid_list, moo);
+			album_art_data_ptr art = art_instance->query(album_art_ids::cover_front, moo);
+			if (art->get_size())
+			{
+				base64_encode(snarl_icon_data, art->get_ptr(), art->get_size());
+				snarl_icon = "";
+			}
+		}
+		catch (...)
+		{
+			//Use foobar2000 icon if album art isn't available.
+			snarl_icon = foobarIcon;
 		}
 
-	
-		LONG32 FooSnarl::FooSnarl::FSAddActions(){
-			LONG32 token = sn42.GetLastMsgToken();
-			sn42.AddAction(token,"Back","@1");
-			sn42.AddAction(token,"Next","@2");
-			sn42.AddAction(token,"Stop","@3");
-			return 0;
+		//Send Snarl Message
+		if (FSLastMsgClass != pAlertClass) {
+			sn42.Hide(sn42.GetLastMsgToken());
 		}
-#pragma endregion
+		FSLastMsgClass = pAlertClass;
 
+		if (sn42.IsVisible(sn42.GetLastMsgToken()) == Snarl::V42::SnarlEnums::Success)
+		{
+			sn42.Update(sn42.GetLastMsgToken(), FSClass(pAlertClass), snarl_title.get_ptr(), snarl_msg.get_ptr(), -1, snarl_icon.get_ptr(), snarl_icon_data.get_ptr());
+		}
+		else
+		{
+			LONG32 ret = sn42.Notify(FSClass(pAlertClass), snarl_title.get_ptr(), snarl_msg.get_ptr(), -1, snarl_icon.get_ptr(), snarl_icon_data.get_ptr());
+			if (ret > 0 && pEnableActions)
+			{
+				switch (pAlertClass) {
+				case MessageClass::Play:
+					sn42.AddAction(ret, "Pause", "@5");
+					sn42.AddAction(ret, "Next", "@2");
+					sn42.AddAction(ret, "Previous", "@1");
+					break;
+				case MessageClass::Pause:
+				case MessageClass::Stop:
+					sn42.AddAction(ret, "Play", "@4");
+					sn42.AddAction(ret, "Next", "@2");
+					sn42.AddAction(ret, "Previous", "@1");
+					break;
+				}
+			}
+		}
+	}
 
-#pragma region InitQuit
-class initquit_foosnarl : public initquit {
+	void FooSnarl::on_playback_event(int alertClass) {
+		send_snarl_message(alertClass, Preferences::titleformat_data, Preferences::textformat_data, Preferences::enable_actions_data);
+	}
 
-public:
-	void on_init()
+	void FooSnarl::try_register()
 	{
-		pfc::string8 image;
-		
-		static_api_ptr_t<ui_control> uiMain;
-		WNDCLASSEX wcex = {0};
-	
+		WNDCLASSEX wcex = { 0 };
+
 		wcex.cbSize = sizeof(WNDCLASSEX);
-		wcex.lpfnWndProc = (WNDPROC) WndProcFooSnarl;
+		wcex.lpfnWndProc = (WNDPROC)WndProcFooSnarl;
 		wcex.hInstance = core_api::get_my_instance();
 		wcex.lpszClassName = _T("FooSnarlMsg");
 
-		FSMsgClassDecode[FSMsgClass::Play] = "Play";
-		FSMsgClassDecode[FSMsgClass::Pause] = "Pause";
-		FSMsgClassDecode[FSMsgClass::Stop] = "Stop";
-
 		RegisterClassEx(&wcex);
-	
+
+		hwndFooSnarlMsg = CreateWindowEx(0, _T("FooSnarlMsg"), _T("FooSnarl Msg"), 0, 0, 0, 0, 0, GetDesktopWindow(), 0, 0, 0);
+
+		if (hwndFooSnarlMsg == NULL)
+		{
+			console::formatter() << "[FooSnarl] Unable to create message window (Error 0x" << pfc::format_int(GetLastError(), 0, 16) << ")";
+		}
+
 		uGetModuleFileName(NULL, foobarIcon);
 		foobarIcon += ",105";
-		
-		hwndFooSnarlMsg = CreateWindowEx(0,_T("FooSnarlMsg"),_T("FooSnarl Msg"),0,0,0,0,0,GetDesktopWindow(),0,0,0);
 
-		if(hwndFooSnarlMsg == NULL)
+		//Register Foobar2000 with Snarl
+		pfc::string8 snarl_password;
+		service_ptr_t<genrand_service> g_rand = genrand_service::g_create();
+		g_rand->seed(time(NULL));
+		pfc::array_t<unsigned> junk;
+		junk.set_count(4);
+		for (unsigned i = 0; i < 4; i++) junk[i] = g_rand->genrand(~0);
+		base64_encode(snarl_password, junk.get_ptr(), 16);
+
+		LONG32 ret = sn42.Register("Foobar2000", "Foobar2000", foobarIcon, snarl_password.get_ptr(), hwndFooSnarlMsg, WM_USER);
+
+		if (ret > 0)
 		{
-			console::formatter() << "[FooSnarl] Unable to create message window (Error 0x" << pfc::format_int(GetLastError(),0,16) << ")";
+			foo_snarl.register_snarl_class(MessageClass::Play);
+			foo_snarl.register_snarl_class(MessageClass::Pause);
+			foo_snarl.register_snarl_class(MessageClass::Stop);
 		}
-
-		try_register();	
+		else
+		{
+			if (ret != -Snarl::V42::SnarlEnums::ErrorNotRunning)
+			{
+				console::formatter() << "[FooSnarl] Unable to register with Snarl";
+			}
+		}
 	}
 
-	void on_quit()
+	void FooSnarl::try_unregister()
 	{
-		try_unregister();
+		//Unregister foosnarl
+		LONG32 ret = sn42.ClearClasses();
+		if (ret < 0 && ret != -Snarl::V42::SnarlEnums::ErrorNotRunning)
+		{
+			console::formatter() << "[FooSnarl] Failed to remove registered classes";
+		}
 
-		lastSong = 0;
+		ret = sn42.Unregister("Foobar2000");
+		if (ret < 0 && ret != -Snarl::V42::SnarlEnums::ErrorNotRunning)
+		{
+			console::formatter() << "[FooSnarl] Failed to unregister with Snarl";
+		}
+
 		DestroyWindow(hwndFooSnarlMsg);
-		UnregisterClass(_T("FooSnarlMsg"),core_api::get_my_instance());
-	}
-
-};
-#pragma endregion
-
-static void try_register()
-{
-	//Register Foobar2000 with Snarl
-	service_ptr_t<genrand_service> g_rand = genrand_service::g_create();
-	g_rand->seed( time( NULL ) );
-	pfc::array_t<unsigned> junk;
-	junk.set_count( 4 );
-	for ( unsigned i = 0; i < 4; i++ ) junk[ i ] = g_rand->genrand( ~0 );
-	base64_encode( snarl_password, junk.get_ptr(), 16 );
-
-	LONG32 ret = sn42.Register("Foobar2000", "Foobar2000", foobarIcon,snarl_password.get_ptr(),hwndFooSnarlMsg, WM_USER);
-
-	if (ret > 0)
-	{
-		FSRegisterClass(Play);
-		FSRegisterClass(Pause);
-		FSRegisterClass(Stop);
-	}
-	else
-	{
-		if (ret != -Snarl::V42::SnarlEnums::ErrorNotRunning)
-		{
-			console::formatter() << "[FooSnarl] Unable to register with Snarl";
-		}
-	}
-}
-
-static void try_unregister()
-{
-	//Unregister foosnarl
-	LONG32 ret = sn42.ClearClasses();
-	if (ret < 0 && ret != -Snarl::V42::SnarlEnums::ErrorNotRunning)
-	{
-		console::formatter() << "[FooSnarl] Failed to remove registered classes";
-	}
-
-	ret = sn42.Unregister("Foobar2000");
-	if (ret < 0 && ret != -Snarl::V42::SnarlEnums::ErrorNotRunning)
-	{
-		console::formatter() << "[FooSnarl] Failed to unregister with Snarl";
+		UnregisterClass(_T("FooSnarlMsg"), core_api::get_my_instance());
 	}
 }
 
@@ -401,5 +353,3 @@ void base64_encode(pfc::string_base & out, const unsigned char * data, unsigned 
 #pragma endregion 
 
 
-//Register initquit, menu
-static initquit_factory_t< initquit_foosnarl > foo_snarl_initquit;

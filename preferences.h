@@ -23,18 +23,19 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWIS
 ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#pragma once
-#include "stdafx.h"
 
 namespace FooSnarl{
-	namespace Preferencesv2 {
+	namespace Preferences {
 		extern const GUID guid_titleformat_data;
 		extern cfg_string titleformat_data;
 
 		extern const GUID guid_textformat_data;
 		extern cfg_string textformat_data;
 
-		extern const GUID guid_timeout;
-		extern cfg_int timeout_data;
+		extern const GUID guid_enable_actions_data;
+		extern cfg_bool enable_actions_data;
+
+		//extern const GUID guid_timeout;
+		//extern cfg_int timeout_data;
 	}
 }

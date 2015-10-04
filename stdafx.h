@@ -26,11 +26,8 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 #pragma once
 #include "../../../SnarlInterface/V42/SnarlInterface.h"
 #include "../ATLHelpers/ATLHelpers.h"
-
 #include "resource.h"
 #include "preferences.h"
-#include <map>
-#include <strsafe.h>
 #include <time.h>
 
 #define _SECURE_ATL 1
@@ -38,22 +35,22 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 namespace FooSnarl{
 	class FooSnarl{
 	public:
-		void SendSnarlMessage(int pAlertClass, pfc::string pTitleFormat, pfc::string pBodyFormat, int pTimeout);
+		void send_snarl_message(int pAlertClass, pfc::string pTitleFormat, pfc::string pBodyFormat, bool pEnableActions);
+		void register_snarl_class(int intClass);
 		void on_playback_event(int alertClass);
-		LONG32 FSAddActions();
+		void try_register();
+		void try_unregister();
+	private:
+		pfc::string8 foobarIcon;
+		HWND hwndFooSnarlMsg;
+	};
+
+	enum MessageClass : int {
+		Auto = 0,
+		Stop,
+		Play,
+		Pause
 	};
 }
 
-enum FSMsgClass : int {
-	Auto = 0,
-	Stop,
-	Play,
-	Pause
-};
-
 static FooSnarl::FooSnarl foo_snarl;
-
-#define COMPONENT_TITLE "FooSnarl"
-#define COMPONENT_VERSION = "1.2.0"
-#define COMPONENT_NAME = "foo_snarl"
-#define COMPONENT_DESCRIPTION = "Snarl notification interface for Foobar2000 Developed by: Skyler Kehren (Pyrodogg) foosnarl at pyrodogg.com Copyright (C) 2008-2015 Skyler Kehren Released under BSD License"

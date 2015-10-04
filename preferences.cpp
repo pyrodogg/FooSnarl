@@ -26,7 +26,7 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 #include "stdafx.h"
 
 namespace FooSnarl {
-	namespace Preferencesv2 {
+	namespace Preferences {
 		static const GUID guid_titleformat_data = { 0xf6d66cdc, 0x872c, 0x48bc,{ 0xa7, 0x98, 0x1a, 0x6a, 0xab, 0x64, 0xcf, 0x45 } };
 		static const char* titleformat_default = "$if(%isplaying%,$if(%ispaused%,Paused,Now Playing),Stopped)";
 		cfg_string titleformat_data(guid_titleformat_data, titleformat_default);
@@ -35,9 +35,14 @@ namespace FooSnarl {
 		static const char* textformat_default = "[%album artist%$crlf()]%title%";
 		cfg_string textformat_data(guid_textformat_data, textformat_default);
 
-		static const GUID guid_timeout = { 0xb224f26b, 0x9799, 0x40c0,{ 0x9f, 0x56, 0x87, 0x27, 0x70, 0x90, 0x1e, 0x9b } };
+		// {71CACCA2-7291-44DB-9168-49E50F6F2152}
+		static const GUID guid_enable_actions_data = { 0x71cacca2, 0x7291, 0x44db,{ 0x91, 0x68, 0x49, 0xe5, 0xf, 0x6f, 0x21, 0x52 } };
+		static const bool enable_actions_default = true;
+		cfg_bool enable_actions_data(guid_enable_actions_data, enable_actions_default);
+
+	/*	static const GUID guid_timeout = { 0xb224f26b, 0x9799, 0x40c0,{ 0x9f, 0x56, 0x87, 0x27, 0x70, 0x90, 0x1e, 0x9b } };
 		static const int32_t timeout_default = 5;
-		cfg_int timeout_data(guid_timeout, timeout_default);
+		cfg_int timeout_data(guid_timeout, timeout_default);*/
 	}
 
 	class CMyPreferences : public CDialogImpl<CMyPreferences>, public preferences_page_instance {
@@ -52,34 +57,34 @@ namespace FooSnarl {
 			MSG_WM_INITDIALOG(OnInitDialog)
 			COMMAND_HANDLER_EX(IDC_TITLEFORMAT_DATA,EN_UPDATE, OnChanged)
 			COMMAND_HANDLER_EX(IDC_TEXTFORMAT_DATA, EN_UPDATE, OnChanged)
-			COMMAND_HANDLER_EX(IDC_TIMEOUT,EN_UPDATE,OnChanged)
+			COMMAND_HANDLER_EX(IDC_ENABLEACTIONS,BN_CLICKED,OnChanged)
 			COMMAND_HANDLER_EX(IDC_TITLEFORMAT_DATA, EN_SETFOCUS, OnSetFocus)
 			COMMAND_HANDLER_EX(IDC_TEXTFORMAT_DATA, EN_SETFOCUS, OnSetFocus)
 			COMMAND_HANDLER_EX(IDC_TESTBUTTON,BN_CLICKED,OnTestButtonClick)
+			NOTIFY_HANDLER_EX(IDC_SYNTAXHELP,NM_CLICK, OnSyntaxHelpClick)
 		END_MSG_MAP()
 
 	private:
 		CEdit titleformat;
 		CEdit textformat;
-		CEdit timeout;
+		CEdit enableactions;
+		CEdit dlg_title;
 		const preferences_page_callback::ptr m_callback;
 
 		BOOL OnInitDialog(CWindow, LPARAM) {
-			console::info("Call InitDialog");
 			titleformat = GetDlgItem(IDC_TITLEFORMAT_DATA);
 			textformat = GetDlgItem(IDC_TEXTFORMAT_DATA);
-			timeout = GetDlgItem(IDC_TIMEOUT);
-
-			pfc::string timeout_str = pfc::toString<t_int32>(Preferencesv2::timeout_data);
-
-			uSetWindowText(titleformat, Preferencesv2::titleformat_data);
-			uSetWindowText(textformat, Preferencesv2::textformat_data);
-			uSetDlgItemInt(IDC_TIMEOUT, Preferencesv2::timeout_data,FALSE);
-
-			titleformat.EnableWindow(true);
-			textformat.EnableWindow(true);
-			timeout.EnableWindow(true);
-
+			enableactions = GetDlgItem(IDC_ENABLEACTIONS);
+			dlg_title = GetDlgItem(IDC_TITLE);
+			
+			CFont *m_pFont = new CFont();
+			m_pFont->CreatePointFont(128, _T("Microsoft Sans Serif"), 0, true, false);
+			dlg_title.SetFont(m_pFont->m_hFont, TRUE);
+			
+			uSetWindowText(titleformat, Preferences::titleformat_data);
+			uSetWindowText(textformat, Preferences::textformat_data);
+			CheckDlgButton(IDC_ENABLEACTIONS, Preferences::enable_actions_data);
+			
 			return FALSE;
 		}
 
@@ -87,11 +92,10 @@ namespace FooSnarl {
 			pfc::string8 temp;
 
 			uGetWindowText(titleformat,temp);
-			if(Preferencesv2::titleformat_data != temp) return true;
+			if(Preferences::titleformat_data != temp) return true;
 			uGetWindowText(textformat,temp);
-			if(Preferencesv2::textformat_data != temp) return true;
-			uGetWindowText(timeout,temp);
-			if(Preferencesv2::timeout_data != atoi(temp)) return true;
+			if(Preferences::textformat_data != temp) return true;
+			if (Preferences::enable_actions_data != (bool) IsDlgButtonChecked(IDC_ENABLEACTIONS)) return true;
 
 			return false;
 		}
@@ -103,9 +107,9 @@ namespace FooSnarl {
 		}
 
 		void apply(){
-			uGetWindowText(titleformat, Preferencesv2::titleformat_data);
-			uGetWindowText(textformat, Preferencesv2::textformat_data);
-			Preferencesv2::timeout_data = uGetDlgItemInt(IDC_TIMEOUT, NULL, FALSE);
+			uGetWindowText(titleformat, Preferences::titleformat_data);
+			uGetWindowText(textformat, Preferences::textformat_data);
+			Preferences::enable_actions_data = (bool)IsDlgButtonChecked(IDC_ENABLEACTIONS);
 		}
 
 		void on_change(){
@@ -114,9 +118,9 @@ namespace FooSnarl {
 		}
 
 		void reset(){
-			uSetWindowText(titleformat, Preferencesv2::titleformat_default);
-			uSetWindowText(textformat, Preferencesv2::textformat_default);
-		    uSetDlgItemInt(IDC_TIMEOUT, Preferencesv2::timeout_default, FALSE);
+			uSetWindowText(titleformat, Preferences::titleformat_default);
+			uSetWindowText(textformat, Preferences::textformat_default);
+			CheckDlgButton(IDC_ENABLEACTIONS, Preferences::enable_actions_default);
 		}
 
 		void OnChanged(UINT, int, HWND c){
@@ -131,7 +135,7 @@ namespace FooSnarl {
 		}
 
 		void OnTestButtonClick(UINT, int, HWND) {
-			foo_snarl.SendSnarlMessage(FSMsgClass::Auto, uGetWindowText(titleformat), uGetWindowText(textformat), uGetDlgItemInt(IDC_TIMEOUT, NULL, FALSE));
+			foo_snarl.send_snarl_message(MessageClass::Auto, uGetWindowText(titleformat), uGetWindowText(textformat),(bool)IsDlgButtonChecked(IDC_ENABLEACTIONS)); //uGetDlgItemInt(IDC_TIMEOUT, NULL, FALSE)
 		}
 
 		void UpdatePreview(HWND c) {
@@ -153,12 +157,18 @@ namespace FooSnarl {
 			pc->playback_format_title_ex(handle, NULL, formattedtext, script, NULL, play_control::display_level_titles);
 			uSetWindowText(GetDlgItem(IDC_FORMATPREVIEW), formattedtext.toString());
 		}
+
+		LRESULT OnSyntaxHelpClick(NMHDR *pNotifyStruct) {
+			//Open syntax help file or browser window...
+			ShellExecuteA(NULL, "open", "http://wiki.hydrogenaud.io/index.php?title=Foobar2000:Titleformat_Reference", NULL, NULL, SW_SHOWNORMAL);
+			return 0;
+		}
 	};
 
 	class Preferences_Page_FooSnarl : public preferences_page_impl<CMyPreferences> {
 	public:
 		const char * get_name(){
-			return COMPONENT_TITLE;
+			return "FooSnarl";
 		}
 
 		GUID get_guid(){

@@ -66,7 +66,6 @@ public:
 
 	//Every set of commands needs to declare which group it  belongs to.
 	GUID get_parent(){
-		//return FooSnarl::Preferencesv1::guid_foosnarl_mainmenu_maingroup;
 		return mainmenu_groups::playback;
 	}
 
@@ -74,7 +73,7 @@ public:
 	void execute(t_uint32 p_index, service_ptr_t<service_base> p_callback){
 		switch (p_index) {
 			case cmd_nowplaying:
-				foo_snarl.on_playback_event(FSMsgClass::Auto); break;
+				foo_snarl.on_playback_event(FooSnarl::MessageClass::Auto); break;
 			default: uBugCheck();
 		}
 	}
