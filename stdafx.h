@@ -26,11 +26,8 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 #pragma once
 #include "../../../SnarlInterface/V42/SnarlInterface.h"
 #include "../ATLHelpers/ATLHelpers.h"
-
 #include "resource.h"
 #include "preferences.h"
-#include <map>
-#include <strsafe.h>
 #include <time.h>
 
 #define _SECURE_ATL 1
