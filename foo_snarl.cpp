@@ -144,21 +144,20 @@ namespace FooSnarl {
 		static_api_ptr_t<playlist_manager> pm;
 		service_ptr_t<titleformat_object> script;
 		metadb_handle_ptr handle;
-		pfc::string8 format;
-		pfc::string_formatter text;
+		pfc::string_formatter text_formatted;
 		pfc::string snarl_title;
 		pfc::string snarl_msg;
 		pfc::string snarl_icon;
 		pfc::string8 snarl_icon_data;
-		static metadb_handle_ptr lastSong;
+		static metadb_handle_ptr handle_last_song;
 		static int FSLastMsgClass = 0;
 
 		//Get and store now playing. If false, then retrieve last playing.
 		if (pc->get_now_playing(handle)) {
-			lastSong.copy(handle);
+			handle_last_song.copy(handle);
 		}
 		else {
-			handle.copy(lastSong);
+			handle.copy(handle_last_song);
 		}
 
 		//If not playing and no stored handle, get focused playlist item.
@@ -181,13 +180,13 @@ namespace FooSnarl {
 
 		//Process title format string for message body
 		static_api_ptr_t<titleformat_compiler>()->compile_safe_ex(script, pBodyFormat.get_ptr(), "Invalid format script");
-		pc->playback_format_title_ex(handle, NULL, text, script, NULL, play_control::display_level_titles);
-		snarl_msg = text.toString();
+		pc->playback_format_title_ex(handle, NULL, text_formatted, script, NULL, play_control::display_level_titles);
+		snarl_msg = text_formatted.toString();
 
 		//Process title format string for message title
 		static_api_ptr_t<titleformat_compiler>()->compile_safe_ex(script, pTitleFormat.get_ptr(), "Invalid format script");
-		pc->playback_format_title_ex(handle, NULL, text, script, NULL, play_control::display_level_titles);
-		snarl_title = text.toString();
+		pc->playback_format_title_ex(handle, NULL, text_formatted, script, NULL, play_control::display_level_titles);
+		snarl_title = text_formatted.toString();
 
 		metadb_handle_list handle_list;
 		pfc::list_t<GUID> guid_list;

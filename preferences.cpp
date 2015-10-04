@@ -151,7 +151,7 @@ namespace FooSnarl {
 	class Preferences_Page_FooSnarl : public preferences_page_impl<CMyPreferences> {
 	public:
 		const char * get_name(){
-			return COMPONENT_TITLE;
+			return "FooSnarl";
 		}
 
 		GUID get_guid(){
