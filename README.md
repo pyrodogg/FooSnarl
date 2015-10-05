@@ -17,7 +17,7 @@ Snarl is very powerful and can be used to show notifications in a multitude of s
 2.  Navigate to the components screen
 3.  Click on the "Get Updates" button
 4.  foobar2000 show you the components that are out of date.
-5.  Make sure FooSnarl is selected and foobar2000 will automatically look for an install the latest stable release of FooSnarl.
+5.  Make sure FooSnarl is selected and foobar2000 will automatically look for and install the latest stable release of FooSnarl.
 
 ### Method #2
 Follow installation steps above. foobar200 will replace your current version of FooSnarl with the latest version.
